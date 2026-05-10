@@ -1,0 +1,7 @@
+jwt:
+    secret: "iBpYBZkfDtYPnHSwC9S5oGAWj2CMfeslvZq0xHVvHlA="
+
+spring:
+  redis:
+    host: localhost
+    port: 6380

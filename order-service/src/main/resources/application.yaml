@@ -1,0 +1,43 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:postgresql://localhost:5434/order_db
+    username: marketplace_user
+    password: javak
+  jpa:
+    hibernate:
+      ddl-auto: update
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        default-requeue-rejected: true
+        retry:
+          enabled: true
+          max-attempts: 4
+          initial-interval: 2000ms
+          multiplier: 3.0
+          max-interval: 300000ms
+
+minio:
+  url: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: products
+
+
+internal:
+  secret-token: klintcy_dodge
+
+rabbitmq:
+  queue:
+    order: order-service.payment.queue
+    dead: dead.letter.queue
+

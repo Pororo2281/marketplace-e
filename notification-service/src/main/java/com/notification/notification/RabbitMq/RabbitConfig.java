@@ -1,0 +1,74 @@
+package com.notification.notification.RabbitMq;
+
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class RabbitConfig {
+
+    @Value("${spring.rabbitmq.username}")
+    private String user;
+
+    @Value("${spring.rabbitmq.password}")
+    private String password;
+
+    @Value("${rabbitmq.queue.order-created}")
+    private String orderCreatedQueueName;
+
+    @Value("${rabbitmq.queue.order-paid}")
+    private String orderPaidQueueName;
+
+
+    @Bean
+    public CachingConnectionFactory connectionFactory() {
+        CachingConnectionFactory factory = new CachingConnectionFactory("localhost");
+        factory.setUsername(user);
+        factory.setPassword(password);
+        return factory;
+    }
+
+    @Bean
+    public DirectExchange orderExchange() {
+        return new DirectExchange("order.exchange");
+    }
+
+    @Bean
+    public Queue orderCreatedQueue() {
+        return new Queue(orderCreatedQueueName, false);
+    }
+
+    @Bean
+    public Queue orderPaidQueue() {
+        return new Queue(orderPaidQueueName, false);
+    }
+
+    @Bean
+    public Binding orderPaidBinding(Queue orderPaidQueue,
+                                       DirectExchange orderExchange) {
+        return BindingBuilder
+                .bind(orderPaidQueue)
+                .to(orderExchange)
+                .with("order.paid");
+    }
+
+    @Bean
+    public Binding orderCreatedBinding(Queue orderCreatedQueue,
+                                DirectExchange orderExchange) {
+        return BindingBuilder
+                .bind(orderCreatedQueue)
+                .to(orderExchange)
+                .with("order.created");
+    }
+
+    @Bean
+    public RabbitAdmin rabbitAdmin() {
+        return new RabbitAdmin(connectionFactory());
+    }
+}
