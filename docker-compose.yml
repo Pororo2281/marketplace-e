@@ -12,7 +12,7 @@ services:
     ports:
       - "6380:6379"
   
-  postgres:
+  user-postgres:
     image: postgres:17
     container_name: user-postgres
     environment:

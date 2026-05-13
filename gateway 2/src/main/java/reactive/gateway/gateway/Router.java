@@ -16,7 +16,11 @@ public class Router {
                                      KeyResolver ipKeyResolver,
                                      KeyResolver userKeyResolver) {
         return builder.routes()
+                .route("oauth-start", r -> r.path("/oauth2/authorization/**")
+                        .uri("http://localhost:8081"))
 
+                .route("oauth-callback", r -> r.path("/login/oauth2/**")
+                        .uri("http://localhost:8081"))
 
                 .route("user-service-auth", r -> r.path("/api/auth/**")
                         .filters(f -> f.requestRateLimiter(c -> {

@@ -1,5 +1,6 @@
 package order_service.order.Mapper;
 
+import order_service.order.Entity.OrderEntity;
 import order_service.order.Entity.OrderItemEntity;
 import order_service.order.Entity.PurchasedProductEntity;
 import order_service.order.Response.PurchasedProductResponse;
@@ -38,5 +39,20 @@ public class EntityToPurchased {
         response.setProductTitle(entity.getProductTitle());
         response.setProductType(entity.getProductType());
         return  response;
+    }
+
+    public static PurchasedProductEntity toEntity(OrderItemEntity item, OrderEntity order){
+        PurchasedProductEntity purchased = new PurchasedProductEntity();
+        purchased.setUserId(order.getUserId());
+        purchased.setDownloadUrl(item.getDownloadUrl());
+        purchased.setLicenseKey(item.getLicenseKey());
+        purchased.setOrderId(item.getOrder().getId());
+        purchased.setOrderItemId(item.getId());
+        purchased.setAccessCount(item.getDownloadCount());
+        purchased.setProductId(item.getProductId());
+        purchased.setProductImageUrl(item.getProductImageUrl());
+        purchased.setProductTitle(item.getProductTitle());
+        purchased.setProductType(item.getProductType());
+        return purchased;
     }
 }

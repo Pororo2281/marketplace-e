@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class LibraryService {
@@ -26,24 +27,10 @@ public class LibraryService {
 
     public void addToLibrary(OrderEntity order) {
 
-        for (OrderItemEntity item : order.getItems()) {
-
-            PurchasedProductEntity purchased = new PurchasedProductEntity();
-            purchased.setUserId(order.getUserId());
-            purchased.setDownloadUrl(item.getDownloadUrl());
-            purchased.setLicenseKey(item.getLicenseKey());
-            purchased.setOrderId(item.getOrder().getId());
-            purchased.setOrderItemId(item.getId());
-            purchased.setPurchasedAt(Instant.now());
-            purchased.setAccessCount(item.getDownloadCount());
-            purchased.setLastAccessedAt(Instant.now());
-            purchased.setProductId(item.getProductId());
-            purchased.setProductImageUrl(item.getProductImageUrl());
-            purchased.setProductTitle(item.getProductTitle());
-            purchased.setProductType(item.getProductType());
-            purchasedProductRepo.save(purchased);
-
-        }
+        List<PurchasedProductEntity> purchasedProducts = order.getItems().stream()
+                .map(item -> EntityToPurchased.toEntity(item, order))
+                .toList();
+        purchasedProductRepo.saveAll(purchasedProducts);
     }
 
     public Page<PurchasedProductResponse> getMyLibrary(int size, int page, Long userId) {

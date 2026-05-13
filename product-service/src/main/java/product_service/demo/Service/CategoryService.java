@@ -1,27 +1,21 @@
 package product_service.demo.Service;
 
-import jakarta.servlet.FilterChain;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import product_service.demo.Entity.CategoryEntity;
-import product_service.demo.Entity.ProductEntity;
-import product_service.demo.Enum.ProductStatus;
 import product_service.demo.Exception.CategoryParrent;
 import product_service.demo.Exception.NotFoundById;
 import product_service.demo.Exception.NotFoundBySlug;
 import product_service.demo.Exception.SlugExists;
 import product_service.demo.Mapper.CategoryMapper;
-import product_service.demo.Mapper.ProductMapper;
+import product_service.demo.MapperToEntity.CategoryEntityMapper;
 import product_service.demo.Repository.CategoryRepo;
 import product_service.demo.Repository.ProductRepo;
 import product_service.demo.Request.CreateCategoryRequest;
 import product_service.demo.Request.UpdateCategoryRequest;
 import product_service.demo.Response.CategoryResponse;
-import product_service.demo.Response.ProductResponse;
-import product_service.demo.Specifications.ProductSpecifications;
 
 @Service
 public class CategoryService {
@@ -115,12 +109,7 @@ public class CategoryService {
 
 
     private CategoryEntity toEntity(CreateCategoryRequest request){
-        CategoryEntity category = new CategoryEntity();
-        category.setName(request.getName());
-        category.setSlug(request.getSlug());
-        category.setActive(request.getIsActive());
-        category.setDescription(request.getDescription());
-        category.setSortOrder(request.getSortOrder());
+        CategoryEntity category = CategoryEntityMapper.toEntity(request);
         if (request.getParentId() != null) {
             CategoryEntity parent = repository.findById(request.getParentId())
                     .orElseThrow(() -> new NotFoundById("Parent category not found with id: " + request.getParentId()));
@@ -144,9 +133,5 @@ public class CategoryService {
         categoryEntity.setActive(!categoryEntity.isActive());
         repository.save(categoryEntity);
         return CategoryMapper.entityToCategory(categoryEntity);
-    }
-
-
-    public void forceDeleteProduct(Long id) {
     }
 }

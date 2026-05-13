@@ -8,6 +8,7 @@ import org.example.userservice.Response.SellerResponse;
 import org.example.userservice.Response.UserResponse;
 import org.example.userservice.Service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +28,7 @@ public class UserController {
 
     @PutMapping
     public ResponseEntity<UserResponse> updateProfile(@RequestHeader("X-USER-ID") Long userId, @Valid @RequestBody UpdateUserRequest userRequest){
-        return ResponseEntity.ok(userService.updateBasicProfile(userRequest,userId));
+        return ResponseEntity.ok(userService.updateBasicProfile(userRequest, userId));
     }
 
     @PostMapping

@@ -13,29 +13,33 @@ import org.springframework.web.server.WebFilter;
 public class SecurityConfig {
 
     private final JwtGlobalFilter jwtGlobalFilter;
-
-    public SecurityConfig(JwtGlobalFilter jwtGlobalFilter) {
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    public SecurityConfig(JwtGlobalFilter jwtGlobalFilter, OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.jwtGlobalFilter = jwtGlobalFilter;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf(csrf -> csrf.disable())
+                .addFilterAt(jwtGlobalFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .authorizeExchange(exchanges -> exchanges
-                                // публичные эндпоинты
-                                .pathMatchers("/api/auth/**").permitAll()
-                                .pathMatchers("/api/categories/**").permitAll()
-                                .pathMatchers("/api/products/**").permitAll()
-                                .pathMatchers("/api/search/**").permitAll()
-                                .pathMatchers("/api/sellers/*/products").permitAll()
-                                .pathMatchers("/api/sellers/**").hasRole("SELLER")
-                                .pathMatchers("/api/orders/sellers/**").hasRole("SELLER")
-
-                                // доступ только для ADMIN
-//              .pathMatchers("/api/admin/**").hasRole("ADMIN")
-                                .anyExchange().authenticated()
-                ).addFilterBefore(jwtGlobalFilter,SecurityWebFiltersOrder.AUTHENTICATION);
+                        .pathMatchers("/oauth2/authorization/**").permitAll()
+                        .pathMatchers("/login/oauth2/**").permitAll()
+                        .pathMatchers("/internal/**").denyAll()
+                        .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers("/api/categories/**").permitAll()
+                        .pathMatchers("/api/products/**").permitAll()
+                        .pathMatchers("/api/search/**").permitAll()
+                        .pathMatchers("/api/sellers/*/products").permitAll()
+                        .pathMatchers("/api/sellers/**").hasRole("SELLER")
+                        .pathMatchers("/api/orders/sellers/**").hasRole("SELLER")
+                        .anyExchange().authenticated()
+                )
+                .oauth2Login(oauth -> oauth
+                        .authenticationSuccessHandler(oAuth2SuccessHandler)
+                );
 
         return http.build();
     }

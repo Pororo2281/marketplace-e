@@ -9,6 +9,7 @@ import org.example.userservice.Repository.RefreshTokenRepo;
 import org.example.userservice.Repository.UserRepo;
 import org.example.userservice.Request.*;
 import org.example.userservice.Response.AuthResponse;
+import org.example.userservice.Response.OAuth2UserResponse;
 import org.example.userservice.Response.SellerResponse;
 import org.example.userservice.Response.UserResponse;
 import org.example.userservice.Security.JwtUtils;
@@ -18,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -204,5 +206,21 @@ public class UserService {
         return userRepo.findById(userId)
                 .map(x->UserMapper.entityToUser(x))
                 .orElseThrow(()->new NotFoundById("user not found by id: " + userId));
+    }
+
+    @Transactional
+    public OAuth2UserResponse findOrCreate(OAuth2UserRequest request)
+    {
+        return userRepo.findByEmail(request.getEmail())
+                .map(user -> new OAuth2UserResponse(user.getId(),user.getRole().name()))
+                .orElseGet(() -> {
+                    UserEntity newUser = new UserEntity();
+                    newUser.setEmail(request.getEmail());
+                    newUser.setFirstName(request.getName());
+                    newUser.setRole(Role.BUYER);
+                    newUser.setPassword(UUID.randomUUID().toString());
+                    userRepo.save(newUser);
+                    return new OAuth2UserResponse(newUser.getId(),newUser.getRole().name());
+                });
     }
 }

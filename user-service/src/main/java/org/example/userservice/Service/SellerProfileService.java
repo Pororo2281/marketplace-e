@@ -25,12 +25,8 @@ public class SellerProfileService {
     }
 
     @Transactional
-    public SellerResponse createSellerProfile(SellerRequest request, UserEntity user){
-        SellerProfileEntity entity = new SellerProfileEntity();
-        entity.setCreatedAt(Instant.now());
-        entity.setDescription(request.getDescription());
-        entity.setCompanyName(request.getCompanyName());
-        entity.setUser(user);
+    public SellerResponse createSellerProfile(SellerRequest request, UserEntity user) {
+        SellerProfileEntity entity = SellerMapper.requestToEntity(request, user);
         repo.save(entity);
         return SellerMapper.entityToSeller(entity);
     }

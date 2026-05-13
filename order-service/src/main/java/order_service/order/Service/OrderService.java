@@ -11,6 +11,7 @@ import order_service.order.Exception.*;
 import order_service.order.Mapper.EntityToOrder;
 import order_service.order.Mapper.EntityToOrderDetail;
 import order_service.order.Mapper.EntityToOrderItem;
+import order_service.order.MapperToEntity.OrderItemEntityMapper;
 import order_service.order.RabbitmMq.RabbitProducer;
 import order_service.order.Repository.CartItemRepo;
 import order_service.order.Repository.MainOrderRepo;
@@ -182,14 +183,7 @@ public class OrderService {
         BigDecimal subtotal = BigDecimal.ZERO;
 
         for (CartItemEntity cartItem : sellerItems) {
-            OrderItemEntity orderItem = new OrderItemEntity();
-            orderItem.setOrder(orderEntity);
-            orderItem.setProductId(cartItem.getProductId());
-            orderItem.setProductTitle(cartItem.getProductTitle());
-            orderItem.setProductType(cartItem.getCategoryName());
-            orderItem.setProductImageUrl(cartItem.getProductImageUrl());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPriceAtPurchase(cartItem.getProductPrice());
+            OrderItemEntity orderItem = OrderItemEntityMapper.toEntity(orderEntity,cartItem);
 
             BigDecimal itemSubtotal = cartItem.getProductPrice()
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
@@ -377,7 +371,7 @@ public class OrderService {
 
         BigDecimal totalRevenue = orderRepo.getTotalRevenue(sellerId);
 
-        BigDecimal average;
+        BigDecimal average= BigDecimal.ZERO;
 
         if (completedOrders!=0){
             average = totalRevenue.divide(
@@ -385,7 +379,7 @@ public class OrderService {
                     RoundingMode.HALF_UP);
         }
 
-        average= BigDecimal.ZERO;
+
 
         Instant fromDate = Instant.now().minus(30, ChronoUnit.DAYS);
 

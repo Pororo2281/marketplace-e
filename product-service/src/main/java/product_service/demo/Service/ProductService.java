@@ -16,8 +16,9 @@ import product_service.demo.Enum.ProductStatus;
 import product_service.demo.Event.ProductBatchEvent;
 import product_service.demo.Event.ProductEvent;
 import product_service.demo.Exception.NotFoundById;
+import product_service.demo.Mapper.ProductEventMapper;
 import product_service.demo.Mapper.ProductMapper;
-import product_service.demo.MapperToEntity.CreateAttribute;
+import product_service.demo.MapperToEntity.AttributeEntityMapper;
 import product_service.demo.Pageable.CreatePageable;
 import product_service.demo.RabbitMq.RabbitProducer;
 import product_service.demo.Repository.CategoryRepo;
@@ -28,7 +29,6 @@ import product_service.demo.Request.UpdateProductRequest;
 import product_service.demo.Request.UpdateStockRequest;
 import product_service.demo.Response.ProductImageResponse;
 import product_service.demo.Response.ProductResponse;
-import product_service.demo.Response.SellerStatsResponse;
 import product_service.demo.Specifications.ProductSpecifications;
 import tools.jackson.databind.ObjectMapper;
 
@@ -170,7 +170,7 @@ public class ProductService {
         if (request.getAttributes() != null) {
             product.setAttributes(request.getAttributes().stream()
                     .map(x->{
-                        ProductAttributeEntity attribute = CreateAttribute.attributeToEntity(x);
+                        ProductAttributeEntity attribute = AttributeEntityMapper.attributeToEntity(x);
                         attribute.setProduct(product);
                         return attribute;
                     })
@@ -185,7 +185,7 @@ public class ProductService {
 
         ProductEntity finalProduct = repository.save(savedProduct);
 
-        ProductEvent productEvent = createProductEvent(finalProduct, ProductEventType.CREATED);
+        ProductEvent productEvent = ProductEventMapper.createProductEvent(finalProduct, ProductEventType.CREATED);
 
         producer.sendProductEvent(productEvent);
 
@@ -260,14 +260,14 @@ public class ProductService {
             productEntity.getAttributes().clear();
             productEntity.getAttributes().addAll(updateRequest.getAttributes().stream()
                     .map(x->{
-                        ProductAttributeEntity attribute = CreateAttribute.attributeToEntity(x);
+                        ProductAttributeEntity attribute = AttributeEntityMapper.attributeToEntity(x);
                         attribute.setProduct(productEntity);
                         return attribute;
                     })
                     .toList());
         }
 
-        ProductEvent productEvent = createProductEvent(productEntity, ProductEventType.UPDATED);
+        ProductEvent productEvent = ProductEventMapper.createProductEvent(productEntity, ProductEventType.UPDATED);
         producer.sendProductEvent(productEvent);
 
         repository.save(productEntity);
@@ -303,15 +303,7 @@ public class ProductService {
         }
         productEntity.setStatus(ProductStatus.ARCHIVED);
 
-        ProductEvent productEvent = new ProductEvent();
-        productEvent.setId(productEntity.getId().toString());
-        productEvent.setTitle(productEntity.getTitle());
-        productEvent.setDescription(productEntity.getDescription());
-        productEvent.setPrice(productEntity.getPrice());
-        productEvent.setCategory(productEntity.getCategory().getName());
-        productEvent.setSeller(productEntity.getSellerId().toString());
-        productEvent.setType(ProductEventType.DELETED);
-
+        ProductEvent productEvent = ProductEventMapper.createProductEvent(productEntity,ProductEventType.DELETED);
         producer.sendProductEvent(productEvent);
 
         repository.save(productEntity);
@@ -346,7 +338,7 @@ public class ProductService {
             productEntity.setOldPrice(request.getOldPrice());
         }
 
-        ProductEvent productEvent = createProductEvent(productEntity, ProductEventType.UPDATED);
+        ProductEvent productEvent = ProductEventMapper.createProductEvent(productEntity, ProductEventType.UPDATED);
         producer.sendProductEvent(productEvent);
 
         repository.save(productEntity);
@@ -463,30 +455,10 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
 
-        ProductEvent productEvent = new ProductEvent();
-        productEvent.setId(productEntity.getId().toString());
-        productEvent.setTitle(productEntity.getTitle());
-        productEvent.setDescription(productEntity.getDescription());
-        productEvent.setPrice(productEntity.getPrice());
-        productEvent.setCategory(productEntity.getCategory().getName());
-        productEvent.setSeller(productEntity.getSellerId().toString());
-        productEvent.setType(ProductEventType.DELETED);
-
+        ProductEvent productEvent = ProductEventMapper.createProductEvent(productEntity, ProductEventType.DELETED);
         producer.sendProductEvent(productEvent);
         repository.delete(productEntity);
 
-    }
-
-    private ProductEvent createProductEvent(ProductEntity productEntity, ProductEventType type){
-        ProductEvent productEvent = new ProductEvent();
-        productEvent.setId(productEntity.getId().toString());
-        productEvent.setTitle(productEntity.getTitle());
-        productEvent.setDescription(productEntity.getDescription());
-        productEvent.setPrice(productEntity.getPrice());
-        productEvent.setCategory(productEntity.getCategory().getName());
-        productEvent.setSeller(productEntity.getSellerId().toString());
-        productEvent.setType(type);
-        return productEvent;
     }
 
     public void reindexProducts() {
@@ -494,7 +466,7 @@ public class ProductService {
                 repository.findAllByStatus(ProductStatus.ACTIVE);
 
         List<ProductEvent> productEvents = productEntities.stream()
-                .map(e -> createProductEvent(e, ProductEventType.UPDATED))
+                .map(e -> ProductEventMapper.createProductEvent(e, ProductEventType.UPDATED))
                 .toList();
 
         int batchSize = 1000;

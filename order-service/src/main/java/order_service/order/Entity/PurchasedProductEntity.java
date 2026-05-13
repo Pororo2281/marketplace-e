@@ -50,6 +50,17 @@ public class PurchasedProductEntity {
     @Column(name = "access_count")
     private Integer accessCount = 0;
 
+    @PrePersist
+    protected void onCreate() {
+        this.purchasedAt = Instant.now();
+        this.lastAccessedAt = Instant.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.lastAccessedAt = Instant.now();
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
