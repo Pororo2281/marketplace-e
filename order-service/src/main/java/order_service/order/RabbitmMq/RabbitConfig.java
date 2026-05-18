@@ -24,18 +24,18 @@ public class RabbitConfig {
     private String password;
 
     @Value("${rabbitmq.queue.order}")
-    private String queueName;
+    private String orderQueueName;
 
     @Value("${rabbitmq.queue.dead}")
     private String dlqQueueName;
 
     @Bean
-    public Queue queue() {
+    public Queue orderQueue() {
         Map<String, Object> args = new HashMap<>();
         args.put("x-dead-letter-exchange", "dlq.exchange");
         args.put("x-dead-letter-routing-key", "dlq");
 
-        return new Queue(queueName, false, false, false, args);
+        return new Queue(orderQueueName, false, false, false, args);
     }
 
     @Bean
@@ -76,9 +76,9 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding orderBinding(Queue queue, DirectExchange paymentExchange) {
+    public Binding orderBinding(Queue orderQueue, DirectExchange paymentExchange) {
         return BindingBuilder
-                .bind(queue)
+                .bind(orderQueue)
                 .to(paymentExchange)
                 .with("payment.succeeded");
     }

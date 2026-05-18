@@ -1,9 +1,7 @@
 package org.example.userservice.Controller;
 
 import jakarta.validation.Valid;
-import org.example.userservice.Request.CreateUserRequest;
-import org.example.userservice.Request.RefreshTokenRequest;
-import org.example.userservice.Request.UserRequest;
+import org.example.userservice.Request.*;
 import org.example.userservice.Response.AuthResponse;
 import org.example.userservice.Response.UserResponse;
 import org.example.userservice.Service.UserService;
@@ -38,6 +36,18 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request){
         userService.logout(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ChangePasswordRequest request){
+        userService.forgotPassword(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request){
+        userService.resetPassword(request);
         return ResponseEntity.noContent().build();
     }
 }

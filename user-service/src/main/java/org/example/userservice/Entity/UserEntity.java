@@ -45,6 +45,9 @@ public class UserEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RefreshTokenEntity> refreshTokens = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PasswordResetTokenEntity> passwordResetTokens = new ArrayList<>();
+
     public UserEntity() {
     }
 
@@ -55,6 +58,14 @@ public class UserEntity {
         this.lastName = lastName;
         this.role = role;
         this.createdAt = createdAt;
+    }
+
+    public List<PasswordResetTokenEntity> getPasswordResetTokens() {
+        return passwordResetTokens;
+    }
+
+    public void setPasswordResetTokens(List<PasswordResetTokenEntity> passwordResetTokens) {
+        this.passwordResetTokens = passwordResetTokens;
     }
 
     public List<OrderEntity> getOrders() {

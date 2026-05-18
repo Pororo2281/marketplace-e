@@ -1,16 +1,23 @@
 package org.example.userservice.Service;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import org.apache.coyote.BadRequestException;
+import org.example.userservice.Entity.PasswordResetTokenEntity;
 import org.example.userservice.Entity.RefreshTokenEntity;
 import org.example.userservice.Entity.UserEntity;
 import org.example.userservice.Enums.Role;
+import org.example.userservice.Enums.UserEventType;
+import org.example.userservice.Event.UserEvent;
 import org.example.userservice.Exception.*;
+import org.example.userservice.Mapper.UserEventMapper;
 import org.example.userservice.Mapper.UserMapper;
+import org.example.userservice.RabbitMq.RabbitProducer;
+import org.example.userservice.Repository.PasswordResetTokenRepo;
 import org.example.userservice.Repository.RefreshTokenRepo;
 import org.example.userservice.Repository.UserRepo;
 import org.example.userservice.Request.*;
 import org.example.userservice.Response.AuthResponse;
 import org.example.userservice.Response.OAuth2UserResponse;
-import org.example.userservice.Response.SellerResponse;
 import org.example.userservice.Response.UserResponse;
 import org.example.userservice.Security.JwtUtils;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
@@ -26,18 +34,22 @@ public class UserService {
 
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
-    private final   JwtUtils jwtUtils;
-    private final   AuthenticationManager authenticationManager;
+    private final PasswordResetTokenRepo passwordResetTokenRepo;
+    private final JwtUtils jwtUtils;
+    private final AuthenticationManager authenticationManager;
     private final SellerProfileService sellerService;
     private final RefreshTokenRepo tokenRepo;
+    private final RabbitProducer rabbitProducer;
 
-    public UserService(UserRepo userRepo, PasswordEncoder passwordEncoder, JwtUtils jwtUtils, AuthenticationManager authenticationManager, SellerProfileService sellerService, RefreshTokenRepo tokenRepo) {
+    public UserService(UserRepo userRepo, PasswordEncoder passwordEncoder, PasswordResetTokenRepo passwordResetTokenRepo, JwtUtils jwtUtils, AuthenticationManager authenticationManager, SellerProfileService sellerService, RefreshTokenRepo tokenRepo, RabbitProducer rabbitProducer) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
+        this.passwordResetTokenRepo = passwordResetTokenRepo;
         this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
         this.sellerService = sellerService;
         this.tokenRepo = tokenRepo;
+        this.rabbitProducer = rabbitProducer;
     }
 
     @Transactional
@@ -64,6 +76,11 @@ public class UserService {
         refreshTokenEntity.setToken(refreshToken);
         refreshTokenEntity.setRevoked(false);
         tokenRepo.save(refreshTokenEntity);
+
+        UserEvent userEvent = UserEventMapper.createUserEvent(userEntity,UserEventType.CREATED);
+
+        rabbitProducer.sendUserActivity(userEvent);
+
 
         return new AuthResponse(token,
                 refreshToken,
@@ -96,6 +113,10 @@ public class UserService {
         refreshTokenEntity.setToken(refreshToken);
         refreshTokenEntity.setRevoked(false);
         tokenRepo.save(refreshTokenEntity);
+
+        UserEvent userEvent = UserEventMapper.createUserEvent(user,UserEventType.LOGIN);
+
+        rabbitProducer.sendUserActivity(userEvent);
 
         return new AuthResponse(token,refreshToken,request.getEmail(),user.getRole().name());
     }
@@ -222,5 +243,35 @@ public class UserService {
                     userRepo.save(newUser);
                     return new OAuth2UserResponse(newUser.getId(),newUser.getRole().name());
                 });
+    }
+
+    public void forgotPassword(@Valid ChangePasswordRequest request) {
+        var userEntity = userRepo.findByEmail(request.getEmail());
+        if (userEntity.isPresent()){
+            String token = UUID.randomUUID().toString();
+            Instant expiry = Instant.now().plus(15, ChronoUnit.MINUTES);
+            passwordResetTokenRepo.save(new PasswordResetTokenEntity(token,expiry,userEntity.get()));
+            UserEvent userEvent = UserEventMapper.createUserEvent(userEntity.get(),UserEventType.RESET_PASSWORD_REQUESTED);
+            userEvent.setPasswordToken(token);
+            rabbitProducer.sendUserActivity(userEvent);
+        }
+    }
+
+    @Transactional
+    public void resetPassword(@Valid ResetPasswordRequest request) {
+        var tokenEntity = passwordResetTokenRepo.findByToken(request.getPasswordResetToken())
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+        if (tokenEntity.isExpired()){
+            throw new RuntimeException("Token expired");
+        }
+
+        UserEntity user = tokenEntity.getUser();
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepo.save(user);
+
+        passwordResetTokenRepo.deleteAll();
+
+        UserEvent userEvent = UserEventMapper.createUserEvent(user,UserEventType.PASSWORD_CHANGED);
+        rabbitProducer.sendUserActivity(userEvent);
     }
 }

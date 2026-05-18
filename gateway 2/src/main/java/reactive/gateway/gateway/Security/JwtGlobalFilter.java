@@ -28,6 +28,21 @@ public class JwtGlobalFilter implements WebFilter{
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
+        String path = exchange.getRequest()
+                .getURI()
+                .getPath();
+
+        if (
+                path.startsWith("/api/auth/") ||
+                        path.startsWith("/oauth2/") ||
+                        path.startsWith("/login/oauth2/") ||
+                        path.startsWith("/api/products/") ||
+                        path.startsWith("/api/categories/") ||
+                        path.startsWith("/api/search/")
+        ) {
+            return chain.filter(exchange);
+        }
+
         String token = extractToken(exchange);
 
         if (token == null) {

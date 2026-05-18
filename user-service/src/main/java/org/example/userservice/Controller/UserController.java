@@ -1,15 +1,14 @@
 package org.example.userservice.Controller;
 
 import jakarta.validation.Valid;
+import org.example.userservice.Request.ChangePasswordRequest;
+import org.example.userservice.Request.ResetPasswordRequest;
 import org.example.userservice.Request.SellerRequest;
 import org.example.userservice.Request.UpdateUserRequest;
 import org.example.userservice.Response.AuthResponse;
-import org.example.userservice.Response.SellerResponse;
 import org.example.userservice.Response.UserResponse;
 import org.example.userservice.Service.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -36,6 +35,7 @@ public class UserController {
         System.out.println("userId = " + userId);
         return ResponseEntity.ok(userService.becomeSeller(request,userId));
     }
+
 
     @DeleteMapping
     public ResponseEntity<Void> deleteProfile(@RequestHeader("X-USER-ID") Long userId){

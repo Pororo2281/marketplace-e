@@ -15,21 +15,13 @@ import java.math.BigDecimal;
 @Service
 public class RabbitListener {
 
-    private final RabbitAdmin rabbitAdmin;
-    private final Queue queue;
+
     private final ObjectMapper objectMapper;
     private final ProductRepo productRepo;
 
-    public RabbitListener(RabbitAdmin rabbitAdmin, Queue queue, ObjectMapper objectMapper, ProductRepo productRepo) {
-        this.rabbitAdmin = rabbitAdmin;
-        this.queue = queue;
+    public RabbitListener(ObjectMapper objectMapper, ProductRepo productRepo) {
         this.objectMapper = objectMapper;
         this.productRepo = productRepo;
-    }
-
-    @PostConstruct
-    public void declareQueue(){
-        rabbitAdmin.declareQueue(queue);
     }
 
     @org.springframework.amqp.rabbit.annotation.RabbitListener(queues = {"${rabbitmq.queue.product}"})

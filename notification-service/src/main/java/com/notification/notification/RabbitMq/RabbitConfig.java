@@ -25,6 +25,9 @@ public class RabbitConfig {
     @Value("${rabbitmq.queue.order-paid}")
     private String orderPaidQueueName;
 
+    @Value("${rabbitmq.queue.user-activity}")
+    private String userQueue;
+
 
     @Bean
     public CachingConnectionFactory connectionFactory() {
@@ -40,6 +43,11 @@ public class RabbitConfig {
     }
 
     @Bean
+    public DirectExchange userExchange() {
+        return new DirectExchange("user.exchange");
+    }
+
+    @Bean
     public Queue orderCreatedQueue() {
         return new Queue(orderCreatedQueueName, false);
     }
@@ -47,6 +55,11 @@ public class RabbitConfig {
     @Bean
     public Queue orderPaidQueue() {
         return new Queue(orderPaidQueueName, false);
+    }
+
+    @Bean
+    public Queue userQueue() {
+        return new Queue(userQueue, false);
     }
 
     @Bean
@@ -70,5 +83,41 @@ public class RabbitConfig {
     @Bean
     public RabbitAdmin rabbitAdmin() {
         return new RabbitAdmin(connectionFactory());
+    }
+
+    @Bean
+    public Binding userRegisterBinding(Queue userQueue,
+                                       DirectExchange userExchange) {
+        return BindingBuilder
+                .bind(userQueue)
+                .to(userExchange)
+                .with("user.created");
+    }
+
+    @Bean
+    public Binding userLoginBinding(Queue userQueue,
+                               DirectExchange userExchange) {
+        return BindingBuilder
+                .bind(userQueue)
+                .to(userExchange)
+                .with("user.login");
+    }
+
+    @Bean
+    public Binding userResetPasswordBinding(Queue userQueue,
+                                    DirectExchange userExchange) {
+        return BindingBuilder
+                .bind(userQueue)
+                .to(userExchange)
+                .with("user.reset_password_requested");
+    }
+
+    @Bean
+    public Binding userChangedPasswordBinding(Queue userQueue,
+                                            DirectExchange userExchange) {
+        return BindingBuilder
+                .bind(userQueue)
+                .to(userExchange)
+                .with("user.password_changed");
     }
 }

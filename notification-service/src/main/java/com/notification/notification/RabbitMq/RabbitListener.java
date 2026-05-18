@@ -2,9 +2,13 @@ package com.notification.notification.RabbitMq;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.notification.notification.Event.UserEvent;
 import com.notification.notification.Respone.OrderItemResponse;
 import com.notification.notification.Respone.OrderResponse;
 import com.notification.notification.Senders.CustomMailSender;
+import com.notification.notification.Senders.HtmlSender;
+import com.notification.notification.Senders.SenderFactory;
+import com.notification.notification.Service.EmailService;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,10 +16,12 @@ public class RabbitListener {
 
     private final CustomMailSender orderMailSender;
     private final ObjectMapper objectMapper;
+    private final EmailService emailService;
 
-    public RabbitListener(CustomMailSender orderMailSender, ObjectMapper objectMapper) {
+    public RabbitListener(CustomMailSender orderMailSender, ObjectMapper objectMapper, EmailService emailService) {
         this.orderMailSender = orderMailSender;
         this.objectMapper = objectMapper;
+        this.emailService = emailService;
     }
 
     @org.springframework.amqp.rabbit.annotation.RabbitListener(queues = {"${rabbitmq.queue.order-created}"})
@@ -94,6 +100,17 @@ public class RabbitListener {
                     , message);
 
         } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @org.springframework.amqp.rabbit.annotation.RabbitListener(queues = {"${rabbitmq.queue.user-activity}"})
+    public void receiveUserActivity(String json){
+        try{
+            UserEvent userEvent = objectMapper.readValue(json, UserEvent.class);
+            emailService.sendMessage(userEvent.getEmail(),userEvent);
+
+        }catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
