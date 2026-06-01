@@ -1,5 +1,7 @@
 package order_service.order.Response;
 
+import order_service.order.Enum.OrderEventType;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -12,27 +14,31 @@ public class OrderMailResponse {
     private Instant createdAt;
     private Instant paidAt;
     private List<OrderItemResponse> orderItems;
+    private OrderEventType orderEventType;
 
 
     public OrderMailResponse() {
     }
 
-    public OrderMailResponse(String email, String orderNumber, BigDecimal totalPrice, Instant createdAt, Instant paidAt, List<OrderItemResponse> orderItems) {
-        this.email = email;
-        this.orderNumber = orderNumber;
-        this.totalPrice = totalPrice;
-        this.createdAt = createdAt;
-        this.paidAt = paidAt;
+    public OrderMailResponse(String email, String orderNumber, BigDecimal totalPrice, Instant createdAt, Instant paidAt, List<OrderItemResponse> orderItems, OrderEventType orderEventType) {
         this.orderItems = orderItems;
+        this.createdAt = createdAt;
+        this.totalPrice = totalPrice;
+        this.orderNumber = orderNumber;
+        this.email = email;
+        this.paidAt = paidAt;
+        this.orderEventType = orderEventType;
     }
 
-    public OrderMailResponse(List<OrderItemResponse> orderItems, Instant createdAt, BigDecimal totalPrice, String orderNumber, String email) {
-        this.orderItems = orderItems;
-        this.createdAt = createdAt;
-        this.totalPrice = totalPrice;
-        this.orderNumber = orderNumber;
-        this.email = email;
+    public OrderEventType getOrderEventType() {
+        return orderEventType;
     }
+
+    public void setOrderEventType(OrderEventType orderEventType) {
+        this.orderEventType = orderEventType;
+    }
+
+
 
     public Instant getPaidAt() {
         return paidAt;

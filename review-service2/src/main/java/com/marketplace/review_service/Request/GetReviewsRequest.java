@@ -6,7 +6,7 @@ import com.marketplace.review_service.Enum.SortOrder;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
-public class GetReviewsQuery {
+public class GetReviewsRequest {
 
     @Min(value = 0, message = "page must be >= 0")
     private Integer page = 0;
@@ -23,7 +23,8 @@ public class GetReviewsQuery {
 
     private ReviewStatus status;
 
-    @Min(value = 1) @Max(value = 5)
+    @Min(value = 1)
+    @Max(value = 5)
     private Integer rating;
 
     private Boolean verifiedPurchase;

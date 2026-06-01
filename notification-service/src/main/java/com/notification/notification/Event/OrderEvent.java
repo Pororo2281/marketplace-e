@@ -1,26 +1,38 @@
-package com.notification.notification.Respone;
+package com.notification.notification.Event;
+
+import com.notification.notification.Enum.NotificationEventType;
+import com.notification.notification.Enum.OrderEventType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-public class OrderResponse {
+public class OrderEvent implements NotificationEvent {
 
     private String email;
     private String orderNumber;
     private BigDecimal totalPrice;
     private Instant createdAt;
     private Instant paidAt;
-    private List<OrderItemResponse> orderItems;
+    private List<OrderItemEvent> orderItems;
+    private OrderEventType orderEventType;
 
-    public OrderResponse() {
+    public OrderEvent() {
     }
 
-    public List<OrderItemResponse> getOrderItems() {
+    public OrderEventType getOrderEventType() {
+        return orderEventType;
+    }
+
+    public void setOrderEventType(OrderEventType orderEventType) {
+        this.orderEventType = orderEventType;
+    }
+
+    public List<OrderItemEvent> getOrderItems() {
         return orderItems;
     }
 
-    public void setOrderItems(List<OrderItemResponse> orderItems) {
+    public void setOrderItems(List<OrderItemEvent> orderItems) {
         this.orderItems = orderItems;
     }
 
@@ -63,5 +75,10 @@ public class OrderResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    @Override
+    public NotificationEventType getType() {
+        return NotificationEventType.valueOf(orderEventType.name());
     }
 }

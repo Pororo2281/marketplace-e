@@ -1,16 +1,16 @@
-package com.notification.notification.Respone;
+package com.notification.notification.Event;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OrderItemResponse {
+public class OrderItemEvent {
 
     private Integer quantity;
     private String productTitle;
     private BigDecimal subtotal;
 
-    public OrderItemResponse() {
+    public OrderItemEvent() {
 
     }
 
