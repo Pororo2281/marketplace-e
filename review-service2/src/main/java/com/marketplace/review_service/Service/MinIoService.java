@@ -1,5 +1,6 @@
 package com.marketplace.review_service.Service;
 
+import com.marketplace.review_service.Exception.FileStorageException;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
@@ -23,9 +24,6 @@ public class MinIoService {
 
     @Value("${minio.bucket}")
     private String bucketName;
-
-    @Value("${minio.url}")
-    private String minioUrl;
 
     public MinIoService(MinioClient minioClient) {
         this.minioClient = minioClient;
@@ -58,7 +56,10 @@ public class MinIoService {
             return objectName;
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload file: " + e.getMessage());
+            throw new FileStorageException(
+                    "Failed to upload file to MinIO",
+                    e
+            );
         }
     }
 
@@ -75,26 +76,22 @@ public class MinIoService {
                     .build();
             minioClient.removeObject(args);
 
-        } catch (ServerException e) {
-            throw new RuntimeException(e);
-        } catch (InsufficientDataException e) {
-            throw new RuntimeException(e);
-        } catch (ErrorResponseException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidResponseException e) {
-            throw new RuntimeException(e);
-        } catch (XmlParserException e) {
-            throw new RuntimeException(e);
-        } catch (InternalException e) {
-            throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+        } catch (
+                ServerException |
+                InsufficientDataException |
+                ErrorResponseException |
+                IOException |
+                NoSuchAlgorithmException |
+                InvalidKeyException |
+                InvalidResponseException |
+                XmlParserException |
+                InternalException |
+                URISyntaxException e
+        ) {
+            throw new FileStorageException(
+                    "Failed to delete file from MinIO",
+                    e
+            );
         }
     }
 }

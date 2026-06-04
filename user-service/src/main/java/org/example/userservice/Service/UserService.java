@@ -7,6 +7,7 @@ import org.example.userservice.Entity.RefreshTokenEntity;
 import org.example.userservice.Entity.UserEntity;
 import org.example.userservice.Enums.Role;
 import org.example.userservice.Enums.UserEventType;
+import org.example.userservice.Enums.UserStatus;
 import org.example.userservice.Event.UserEvent;
 import org.example.userservice.Exception.*;
 import org.example.userservice.Mapper.UserEventMapper;
@@ -20,10 +21,16 @@ import org.example.userservice.Response.AuthResponse;
 import org.example.userservice.Response.OAuth2UserResponse;
 import org.example.userservice.Response.UserResponse;
 import org.example.userservice.Security.JwtUtils;
+import org.example.userservice.Specification.UserSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -36,17 +43,15 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetTokenRepo passwordResetTokenRepo;
     private final JwtUtils jwtUtils;
-    private final AuthenticationManager authenticationManager;
     private final SellerProfileService sellerService;
     private final RefreshTokenRepo tokenRepo;
     private final RabbitProducer rabbitProducer;
 
-    public UserService(UserRepo userRepo, PasswordEncoder passwordEncoder, PasswordResetTokenRepo passwordResetTokenRepo, JwtUtils jwtUtils, AuthenticationManager authenticationManager, SellerProfileService sellerService, RefreshTokenRepo tokenRepo, RabbitProducer rabbitProducer) {
+    public UserService(UserRepo userRepo, PasswordEncoder passwordEncoder, PasswordResetTokenRepo passwordResetTokenRepo, JwtUtils jwtUtils, SellerProfileService sellerService, RefreshTokenRepo tokenRepo, RabbitProducer rabbitProducer) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetTokenRepo = passwordResetTokenRepo;
         this.jwtUtils = jwtUtils;
-        this.authenticationManager = authenticationManager;
         this.sellerService = sellerService;
         this.tokenRepo = tokenRepo;
         this.rabbitProducer = rabbitProducer;
@@ -68,7 +73,7 @@ public class UserService {
         userEntity.setUpdatedAt(Instant.now());
         userRepo.save(userEntity);
 
-        String token = jwtUtils.generateTokenFromId(userEntity.getId(),Role.BUYER.name());
+        String token = jwtUtils.generateTokenFromId(userEntity.getId(),Role.BUYER.name(),userEntity.getUserStatus());
         String refreshToken = jwtUtils.generateRefreshTokenFromId(userEntity.getId());
 
         RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
@@ -99,14 +104,15 @@ public class UserService {
     public AuthResponse login(UserRequest request){
         var user = userRepo.findByEmail(request.getEmail())
                 .orElseThrow(()->new UserNotFoundByEmail("user not found by email: " + request.getEmail()));
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
-        Authentication authentication = authenticationManager.authenticate(authToken);
+
+        if (user.getUserStatus() == UserStatus.BLOCKED){
+            throw new UserBlocked("user with email: " + request.getEmail() + " is blocked");
+        }
 
         tokenRepo.revokeAllByUserId(user.getId());
 
-        String token = jwtUtils.generateJwtToken(authentication);
-        String refreshToken = jwtUtils.generateRefreshToken(authentication);
+        String token = jwtUtils.generateTokenFromId(user.getId(),user.getRole().name(),user.getUserStatus());
+        String refreshToken = jwtUtils.generateRefreshTokenFromId(user.getId());
 
         RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
         refreshTokenEntity.setUser(user);
@@ -147,7 +153,7 @@ public class UserService {
         userEntity.setUpdatedAt(Instant.now());
         var seller = sellerService.createSellerProfile(request,userEntity);
 
-        String token = jwtUtils.generateTokenFromId(userEntity.getId(),userEntity.getRole().name());
+        String token = jwtUtils.generateTokenFromId(userEntity.getId(),userEntity.getRole().name(),userEntity.getUserStatus());
         String refreshToken = jwtUtils.generateRefreshTokenFromId(userEntity.getId());
         return  new AuthResponse(token,
                 refreshToken,
@@ -189,10 +195,14 @@ public class UserService {
         var user = userRepo.findById(Long.parseLong(id))
                 .orElseThrow(() -> new NotFoundById("User not found by id: " + id));
 
+        if (user.getUserStatus()==UserStatus.BLOCKED){
+            throw new UserBlocked("user with id: " + id + " is blocked");
+        }
+
         tokenEntity.setRevoked(true);
         tokenRepo.save(tokenEntity);
 
-        String newAccessToken = jwtUtils.generateTokenFromId(Long.parseLong(id),user.getRole().name());
+        String newAccessToken = jwtUtils.generateTokenFromId(Long.parseLong(id),user.getRole().name(),user.getUserStatus());
         String newRefreshToken = jwtUtils.generateRefreshTokenFromId(Long.parseLong(id));
 
         RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
@@ -233,15 +243,16 @@ public class UserService {
     public OAuth2UserResponse findOrCreate(OAuth2UserRequest request)
     {
         return userRepo.findByEmail(request.getEmail())
-                .map(user -> new OAuth2UserResponse(user.getId(),user.getRole().name()))
+                .map(user -> new OAuth2UserResponse(user.getId(),user.getRole().name(),user.getUserStatus().name()))
                 .orElseGet(() -> {
                     UserEntity newUser = new UserEntity();
                     newUser.setEmail(request.getEmail());
                     newUser.setFirstName(request.getName());
                     newUser.setRole(Role.BUYER);
                     newUser.setPassword(UUID.randomUUID().toString());
+                    newUser.setUserStatus(UserStatus.ACTIVE);
                     userRepo.save(newUser);
-                    return new OAuth2UserResponse(newUser.getId(),newUser.getRole().name());
+                    return new OAuth2UserResponse(newUser.getId(),newUser.getRole().name(),newUser.getUserStatus().name());
                 });
     }
 
@@ -260,9 +271,9 @@ public class UserService {
     @Transactional
     public void resetPassword(@Valid ResetPasswordRequest request) {
         var tokenEntity = passwordResetTokenRepo.findByToken(request.getPasswordResetToken())
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new InvalidPasswordResetTokenException("Invalid token"));
         if (tokenEntity.isExpired()){
-            throw new RuntimeException("Token expired");
+            throw new InvalidPasswordResetTokenException("Token expired");
         }
 
         UserEntity user = tokenEntity.getUser();
@@ -273,5 +284,38 @@ public class UserService {
 
         UserEvent userEvent = UserEventMapper.createUserEvent(user,UserEventType.PASSWORD_CHANGED);
         rabbitProducer.sendUserActivity(userEvent);
+    }
+
+    @Transactional
+    public void blockUser(Long userId){
+        var user = userRepo.findById(userId)
+                .orElseThrow(()->new NotFoundById("user not found by id: " + userId));
+        user.setUserStatus(UserStatus.BLOCKED);
+        userRepo.save(user);
+    }
+
+    @Transactional
+    public void unBlockUser(Long userId) {
+        var user = userRepo.findById(userId)
+                .orElseThrow(()->new NotFoundById("user not found by id: " + userId));
+        user.setUserStatus(UserStatus.ACTIVE);
+        userRepo.save(user);
+    }
+
+    public Page<UserResponse> getUsers(Pageable pageable, String search, String role, Boolean blocked) {
+        Role userRole = role == null ? null : Role.valueOf(role);
+        Specification specification = Specification.where(UserSpecification.hasBlocked(blocked))
+                .and(UserSpecification.hasRole(userRole))
+                .and(UserSpecification.hasSearch(search));
+
+        Page<UserEntity> products = userRepo.findAll(specification, pageable);
+
+        return products.map(UserMapper::entityToUser);
+    }
+
+    public UserResponse getUserByIdForAdmin(Long userId) {
+        return userRepo.findById(userId)
+                .map(x->UserMapper.entityToUser(x))
+                .orElseThrow(()->new NotFoundById("user not found by id: " + userId));
     }
 }

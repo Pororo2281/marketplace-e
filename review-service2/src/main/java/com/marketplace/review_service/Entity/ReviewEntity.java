@@ -2,6 +2,7 @@ package com.marketplace.review_service.Entity;
 
 import com.marketplace.review_service.Enum.ReviewStatus;
 import jakarta.persistence.*;
+import org.checkerframework.checker.units.qual.C;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -74,7 +75,7 @@ public class ReviewEntity {
     private Instant moderatedAt;
 
     @Column(name = "moderated_by")
-    private Long moderatedBy; // ID админа
+    private Long moderatedBy;
 
     @OneToOne(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private SellerResponseEntity sellerResponse;

@@ -1,5 +1,6 @@
 package payment_service.payment_service.Controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +21,7 @@ public class YookassaWebhookController {
     }
 
     @PostMapping
-    public ResponseEntity<?> handleWebhook(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> handleWebhook(@Valid @RequestBody Map<String, Object> payload) {
         System.out.println("webhook received: " + payload);
         service.handleWebhook(payload);
         return ResponseEntity.ok("Webhook processed");

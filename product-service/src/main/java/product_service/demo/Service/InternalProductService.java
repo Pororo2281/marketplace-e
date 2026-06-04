@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import product_service.demo.Entity.ProductEntity;
 import product_service.demo.Entity.ProductImageEntity;
 import product_service.demo.Enum.ProductStatus;
+import product_service.demo.Exception.NotFoundById;
 import product_service.demo.Mapper.ProductMapper;
 import product_service.demo.Repository.ProductRepo;
 import product_service.demo.Request.CheckAvailabilityItem;
@@ -169,7 +170,7 @@ public class InternalProductService {
         for (CheckAvailabilityItem item : request.getItems()) {
 
             ProductEntity product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new NotFoundById("Product not found"));
 
             product.setStockQuantity(
                     product.getStockQuantity() + item.getQuantity()
@@ -189,13 +190,25 @@ public class InternalProductService {
 
     public Long getProductByProductId(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"))
+                .orElseThrow(() -> new NotFoundById("Product not found"))
                 .getSellerId();
     }
 
     public ProductResponse getSellerIdByProductId(Long productId) {
         return productRepository.findById(productId)
                 .map(productMapper::entityToProduct)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new NotFoundById("Product not found"));
+    }
+
+    public void approveProduct(Long id) {
+     var product =  productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundById("Product not found by id " + id));
+     product.setStatus(ProductStatus.ACTIVE);
+    }
+
+    public void rejectProduct(Long id) {
+        var product =  productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundById("Product not found by id " + id));
+        product.setStatus(ProductStatus.REJECTED);
     }
 }

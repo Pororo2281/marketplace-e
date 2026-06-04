@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.FieldSuggester;
 import org.springframework.stereotype.Service;
 import search.search.Elastic.ProductDocument;
+import search.search.Exception.SearchServiceException;
 import search.search.Mapper.DocumentToResponse;
 import search.search.Response.CategoryCountResponse;
 
@@ -16,7 +17,6 @@ import java.util.List;
 public class SearchService {
 
     private final ElasticsearchClient client;
-
 
     public SearchService(ElasticsearchClient client) {
         this.client = client;
@@ -84,8 +84,8 @@ public class SearchService {
                                     .terms(t->t
                                             .field("category"))),
                     ProductDocument.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException e){
+            throw new SearchServiceException("Elasticsearch request failed",e);
         }
 
         List<CategoryCountResponse> categories = response.aggregations()
@@ -131,7 +131,7 @@ public class SearchService {
                             )), ProductDocument.class);
         }
         catch (IOException e){
-            throw new RuntimeException(e);
+            throw new SearchServiceException("Elasticsearch request failed",e);
         }
 
 

@@ -59,13 +59,13 @@ public class OrderController {
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<OrderDetailResponse> cancelOrder(@RequestHeader("X-USER-ID") Long userId,
                                                      @PathVariable Long orderId,
-                                                     @RequestBody(required = false) UpdateOrderStatusRequest request){
+                                                     @Valid @RequestBody(required = false) UpdateOrderStatusRequest request){
         return ResponseEntity.ok(orderService.cancelOrder(userId,orderId,request));
     }
 
     @PostMapping("/{id}/refund")
     public ResponseEntity<OrderDetailResponse> requestRefund(@PathVariable Long id,
-                                                             @RequestBody(required = false) UpdateOrderStatusRequest request,
+                                                             @Valid @RequestBody(required = false) UpdateOrderStatusRequest request,
                                                              @RequestHeader("X-USER-ID") Long userId){
         return ResponseEntity.ok(orderService.requestRefund(id,request,userId));
     }

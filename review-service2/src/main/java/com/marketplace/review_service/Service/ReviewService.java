@@ -10,6 +10,7 @@ import com.marketplace.review_service.Enum.ReviewSortBy;
 import com.marketplace.review_service.Enum.ReviewStatus;
 import com.marketplace.review_service.Enum.SortOrder;
 import com.marketplace.review_service.Event.ReviewEvent;
+import com.marketplace.review_service.Exception.*;
 import com.marketplace.review_service.Mapper.ReviewEventMapper;
 import com.marketplace.review_service.Mapper.ReviewMapper;
 import com.marketplace.review_service.RabbitMq.RabbitProducer;
@@ -41,7 +42,7 @@ public class ReviewService {
     private final ProductClient productClient;
     private final RabbitProducer rabbitProducer;
     private final ReviewHelpfulRepo reviewHelpfulRepo;
-    private static final Logger log = LoggerFactory.getLogger(ReviewService.class);
+
 
     public ReviewService(ReviewRepo reviewRepo, OrderClient orderClient, UserClient userClient, ProductClient productClient, RabbitProducer rabbitProducer, ReviewHelpfulRepo reviewHelpfulRepo) {
         this.reviewRepo = reviewRepo;
@@ -55,15 +56,14 @@ public class ReviewService {
     @Transactional
     public ReviewResponse createReview(Long userId, CreateReviewRequest request) {
 
-        log.info("Creating review: userId={}, productId={}", userId, request.getProductId());
 
         if (reviewRepo.existsByUserIdAndProductId(userId, request.getProductId())) {
-            throw new IllegalStateException("Review already exists");
+            throw new ReviewAlreadyExist("Review already exists");
         }
 
         boolean hasPurchased = orderClient.checkUserPurchase(userId, request.getProductId());
         if (!hasPurchased) {
-            throw new IllegalStateException("User has not purchased this product");
+            throw new ProductNotPurchasedException("User has not purchased this product");
         }
 
         var user = userClient.getUserById(userId);
@@ -93,7 +93,7 @@ public class ReviewService {
             });
         }
 
-        reviewEntity.setStatus(ReviewStatus.APPROVED);//PENDING
+        reviewEntity.setStatus(ReviewStatus.PENDING);
         reviewEntity.setVerifiedPurchase(hasPurchased);
 
         var saved = reviewRepo.save(reviewEntity);
@@ -108,7 +108,7 @@ public class ReviewService {
     public ReviewResponse getReviewById(Long id) {
        return reviewRepo.findById(id)
                 .map(ReviewMapper::toResponse)
-                .orElseThrow(() -> new IllegalStateException("Review not found"));
+                .orElseThrow(() -> new NotFoundById("Review not found by id: " + id));
     }
 
     public Page<ReviewResponse> getReviewsByProductId(
@@ -128,7 +128,7 @@ public class ReviewService {
         );
 
         if (rating != null && (rating < 1 || rating > 5)) {
-            throw new IllegalArgumentException("Rating must be between 1 and 5");
+            throw new InvalidRatingException("Rating must be between 1 and 5");
         }
 
         Pageable pageable = PageRequest.of(
@@ -154,11 +154,9 @@ public class ReviewService {
     @Transactional
     public ReviewResponse updateReview(Long id,  UpdateReviewRequest request,Long userId) {
 
-        log.info("Updating review: reviewId={}, userId={}", id, userId);
-
         var reviewEntity = reviewRepo.findById(id)
                 .filter(re-> re.getUserId().equals(userId))
-                .orElseThrow(() -> new IllegalStateException("Review not found"));
+                .orElseThrow(() -> new NotFoundById("Review not found by id: " +id));
 
         if (request.getRating() != null) {
             reviewEntity.setRating(request.getRating());
@@ -192,11 +190,9 @@ public class ReviewService {
     @Transactional
     public void deleteReview(Long id,Long userId) {
 
-        log.info("Deleting review: reviewId={}, userId={}", id, userId);
-
         var reviewEntity = reviewRepo.findById(id)
                 .filter(re-> re.getUserId().equals(userId))
-                .orElseThrow(() -> new IllegalStateException("Review not found"));
+                .orElseThrow(() -> new NotFoundById("Review not found by id: " +id));
 
         reviewRepo.deleteById(id);
 
@@ -208,15 +204,13 @@ public class ReviewService {
 
     public void markReviewAsHelpful(Long id, Long userId) {
 
-        log.info("Marking review as helpful: reviewId={}, userId={}", id, userId);
-
         var reviewEntity = reviewRepo.findById(id)
-                .orElseThrow(() -> new IllegalStateException("Review not found"));
+                .orElseThrow(() -> new NotFoundById("Review not found"));
 
         boolean checkHelpful = reviewHelpfulRepo.existsByReviewIdAndUserId(id,userId);
 
         if (checkHelpful) {
-            throw new IllegalStateException("User has already marked this review as helpful");
+            throw new AlreadyMarkedHelpfulException("User has already marked this review as helpful");
         }
 
         var helpfulVote = new ReviewHelpfulEntity();
@@ -229,13 +223,12 @@ public class ReviewService {
     }
 
     public ReviewResponse approveReview(Long reviewId) {
-        log.info("Approving review: reviewId={}", reviewId);
 
         var reviewEntity = reviewRepo.findById(reviewId)
-                .orElseThrow(() -> new IllegalStateException("Review not found"));
+                .orElseThrow(() -> new NotFoundById("Review not found by id: " + reviewId));
 
         if (reviewEntity.getStatus() != ReviewStatus.PENDING) {
-            throw new IllegalStateException("Only pending reviews can be approved");
+            throw new ReviewCannotBeApprovedException("Only pending reviews can be approved");
         }
 
         reviewEntity.setModeratedAt(Instant.now());
@@ -250,13 +243,12 @@ public class ReviewService {
     }
 
     public ReviewResponse rejectReview(RejectReviewRequest request, Long reviewId) {
-        log.info("Rejecting review: reviewId={}", reviewId);
 
         var reviewEntity = reviewRepo.findById(reviewId)
-                .orElseThrow(() -> new IllegalStateException("Review not found"));
+                .orElseThrow(() -> new NotFoundById("Review not found by id: " + reviewId));
 
         if (reviewEntity.getStatus() != ReviewStatus.PENDING) {
-            throw new IllegalStateException("Only pending reviews can be rejected");
+            throw new ReviewCannotBeRejectedException("Only pending reviews can be rejected");
         }
 
         reviewEntity.setModerationReason(request.getReason());
@@ -276,5 +268,14 @@ public class ReviewService {
         event.setRatingCount(ratingCount);
         event.setRating(rating);
         return event;
+    }
+
+    public void deleteReviewByAdmin(Long reviewId) {
+        reviewRepo.deleteById(reviewId);
+    }
+
+    public Page<ReviewResponse> getPendingReviews(Pageable pageable) {
+        return reviewRepo.findPendingReview(pageable)
+                .map(ReviewMapper::toResponse);
     }
 }

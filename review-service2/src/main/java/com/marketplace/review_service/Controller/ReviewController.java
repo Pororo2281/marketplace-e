@@ -3,7 +3,6 @@ package com.marketplace.review_service.Controller;
 import com.marketplace.review_service.Enum.ReviewSortBy;
 import com.marketplace.review_service.Enum.SortOrder;
 import com.marketplace.review_service.Request.CreateReviewRequest;
-import com.marketplace.review_service.Request.GetReviewsQuery;
 import com.marketplace.review_service.Request.UpdateReviewRequest;
 import com.marketplace.review_service.Response.ReviewResponse;
 import com.marketplace.review_service.Service.ReviewService;

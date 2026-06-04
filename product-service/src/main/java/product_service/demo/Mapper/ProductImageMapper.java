@@ -1,8 +1,6 @@
 package product_service.demo.Mapper;
 
-import io.minio.GetPresignedObjectUrlArgs;
-import io.minio.MinioClient;
-import io.minio.SetBucketPolicyArgs;
+import io.minio.*;
 import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
@@ -26,10 +24,25 @@ public class ProductImageMapper {
         return response;
     }
 
+
     @PostConstruct
     public void init() {
         try {
             String bucketName = "products";
+
+            boolean bucketExists = minioClient.bucketExists(
+                    BucketExistsArgs.builder()
+                            .bucket(bucketName)
+                            .build()
+            );
+
+            if (!bucketExists) {
+                minioClient.makeBucket(
+                        MakeBucketArgs.builder()
+                                .bucket(bucketName)
+                                .build()
+                );
+            }
 
             String policy = """
             {
@@ -37,7 +50,7 @@ public class ProductImageMapper {
               "Statement":[
                 {
                   "Effect":"Allow",
-                  "Principal":"*",
+                  "Principal":{"AWS":["*"]},
                   "Action":["s3:GetObject"],
                   "Resource":["arn:aws:s3:::%s/*"]
                 }
@@ -56,6 +69,7 @@ public class ProductImageMapper {
             throw new RuntimeException("Error setting bucket policy", e);
         }
     }
+
 
     private String getImageUrl(String objectKey) {
         return "http://localhost:9000/products/" + objectKey;

@@ -1,7 +1,6 @@
 package com.notification.notification.Service;
 
-import com.notification.notification.Enum.UserEventType;
-import com.notification.notification.Event.UserEvent;
+import com.notification.notification.Event.NotificationEvent;
 import com.notification.notification.Senders.HtmlSender;
 import com.notification.notification.Senders.SenderFactory;
 import org.springframework.stereotype.Service;
@@ -15,9 +14,9 @@ public class EmailService {
         this.senderFactory = senderFactory;
     }
 
-    public void sendMessage(String to , UserEvent userEvent){
-        HtmlSender htmlSender = senderFactory.getSender(userEvent.getEventType());
-        htmlSender.send(to,userEvent);
+    public void sendMessage(String to , NotificationEvent notificationEvent ){
+        HtmlSender htmlSender = senderFactory.getSender(notificationEvent.getType());
+        htmlSender.send(to,notificationEvent);
     }
 
 }

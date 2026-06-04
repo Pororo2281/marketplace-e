@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   redis:
     image: redis:7
@@ -60,14 +59,24 @@ services:
       POSTGRES_PASSWORD: javak
       POSTGRES_DB: review_db    
     ports:
-      - "5436:5432"              
+      - "5436:5432"
+
+  admin-postgres:
+    image: postgres:17
+    container_name: admin-postgres
+    environment:
+      POSTGRES_USER: marketplace_user
+      POSTGRES_PASSWORD: javak
+      POSTGRES_DB: admin_db    
+    ports:
+      - "5437:5432"                      
   
   minio:
     image: minio/minio:latest
     container_name: product-minio
     ports:
-      - "9000:9000"   # API
-      - "9001:9001"   # Web Console
+      - "9000:9000"
+      - "9001:9001"   
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -95,5 +104,194 @@ services:
     ports:
       - "9200:9200"
 
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - user-postgres
+      - rabbitmq
+      - redis    
+
+  admin-service:
+    build:
+      context: ./admin-service
+    container_name: admin-service
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      USER_SERVICE_URL: http://user-service:8081
+      PRODUCT_SERVICE_URL: http://product-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+      REVIEW_SERVICE_URL: http://review-service:8088
+      SEARCH_SERVICE_URL: http://search-service:8086
+    depends_on:
+      - admin-postgres
+      - rabbitmq
+
+  gateway-service:
+    build:
+      context: ./gateway 2
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      USER_SERVICE_URL: http://user-service:8081
+      PRODUCT_SERVICE_URL: http://product-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+      ADMIN_SERVICE_URL: http://admin-service:8089
+      REVIEW_SERVICE_URL: http://review-service:8088
+      SEARCH_SERVICE_URL: http://search-service:8086
+    depends_on:
+      - gateway-redis
+      - user-service
+      - product-service
+      - order-service
+
+  product-service:
+    build:
+      context: ./product-service
+    container_name: product-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      - product-postgres
+      - rabbitmq
+      - minio
+  
+  notification-service:
+    build:
+      context: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      - rabbitmq  
+
+  search-service:
+    build:
+      context: ./search
+    container_name: search-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      - rabbitmq
+      - elasticsearch 
+
+  review-service:
+    build:
+      context: ./review-service2
+    container_name: review-service
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      USER_SERVICE_URL: http://user-service:8081
+      PRODUCT_SERVICE_URL: http://product-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+      ADMIN_SERVICE_URL: http://admin-service:8089
+      SEARCH_SERVICE_URL: http://search-service:8086
+    depends_on:
+      - review-postgres
+      - rabbitmq
+      - minio
+
+  order-service:
+    build:
+      context: ./order-service
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      USER_SERVICE_URL: http://user-service:8081
+      PRODUCT_SERVICE_URL: http://product-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      REVIEW_SERVICE_URL: http://review-service:8088
+      SEARCH_SERVICE_URL: http://search-service:8086
+    depends_on:
+      - order-postgres
+      - rabbitmq
+      - minio         
+
+  payment-service:
+    build:
+      context: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      USER_SERVICE_URL: http://user-service:8081
+      PRODUCT_SERVICE_URL: http://product-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      REVIEW_SERVICE_URL: http://review-service:8088
+      SEARCH_SERVICE_URL: http://search-service:8086
+    depends_on:
+      - payment-postgres
+      - rabbitmq
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+    volumes:
+      - grafana_data:/var/lib/grafana 
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki          
+        
 volumes:
   minio_data:
+  grafana_data:

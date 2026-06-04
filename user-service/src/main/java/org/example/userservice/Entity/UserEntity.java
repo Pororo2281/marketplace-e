@@ -2,6 +2,7 @@ package org.example.userservice.Entity;
 
 import org.example.userservice.Enums.Role;
 import jakarta.persistence.*;
+import org.example.userservice.Enums.UserStatus;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -36,6 +37,10 @@ public class UserEntity {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "user_status")
+    @Enumerated(EnumType.STRING)
+    private UserStatus userStatus;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private SellerProfileEntity sellerProfile;
 
@@ -47,6 +52,8 @@ public class UserEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PasswordResetTokenEntity> passwordResetTokens = new ArrayList<>();
+
+
 
     public UserEntity() {
     }
@@ -66,6 +73,14 @@ public class UserEntity {
 
     public void setPasswordResetTokens(List<PasswordResetTokenEntity> passwordResetTokens) {
         this.passwordResetTokens = passwordResetTokens;
+    }
+
+    public UserStatus getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
     }
 
     public List<OrderEntity> getOrders() {

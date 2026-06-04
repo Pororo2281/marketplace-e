@@ -45,6 +45,7 @@ public class WebhookService {
         }
     }
 
+    @Transactional
     private void updateOrderPaymentStatus(String event,String paymentId) {
         String status = event.substring(8).toUpperCase();
         PaymentEntity payment = paymentRepo

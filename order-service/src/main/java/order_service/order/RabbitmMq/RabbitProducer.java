@@ -2,7 +2,7 @@ package order_service.order.RabbitmMq;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import order_service.order.Response.OrderMailResponse;
+import order_service.order.Response.OrderEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ public class RabbitProducer {
         this.objectMapper = objectMapper;
     }
 
-    public void sendOrderCreated(OrderMailResponse response) {
+    public void sendOrderCreated(OrderEvent response) {
         String json = null;
         try {
             json = objectMapper.writeValueAsString(response);
@@ -31,7 +31,7 @@ public class RabbitProducer {
         );
     }
 
-    public void sendOrderPaid(OrderMailResponse response) {
+    public void sendOrderPaid(OrderEvent response) {
         String json = null;
         try {
             json = objectMapper.writeValueAsString(response);

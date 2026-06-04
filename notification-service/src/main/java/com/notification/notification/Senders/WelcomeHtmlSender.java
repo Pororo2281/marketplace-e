@@ -8,7 +8,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 @Component
-public class WelcomeHtmlSender implements HtmlSender{
+public class WelcomeHtmlSender implements HtmlSender<UserEvent>{
 
     private final JavaMailSender mailSender;
     private final EmailLoader emailLoader;

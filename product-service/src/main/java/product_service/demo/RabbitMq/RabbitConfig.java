@@ -29,8 +29,11 @@ public class RabbitConfig {
 
     @Bean
     public CachingConnectionFactory connectionFactory(){
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
-        connectionFactory.setUsername(user);
+
+        String host = System.getenv().getOrDefault("SPRING_RABBITMQ_HOST", "localhost");
+        int port = Integer.parseInt(System.getenv().getOrDefault("SPRING_RABBITMQ_PORT", "5672"));
+
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(host, port);        connectionFactory.setUsername(user);
         connectionFactory.setPassword(password);
         return connectionFactory;
     }

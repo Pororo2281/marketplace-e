@@ -11,7 +11,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 @Component
-public class PasswordChangedHtmlSender implements HtmlSender {
+public class PasswordChangedHtmlSender implements HtmlSender<UserEvent> {
 
     private final JavaMailSender mailSender;
     private final EmailLoader emailLoader;

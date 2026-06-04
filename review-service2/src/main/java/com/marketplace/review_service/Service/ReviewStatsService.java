@@ -13,16 +13,12 @@ import java.util.Map;
 public class ReviewStatsService {
 
     private final ReviewRepo reviewRepo;
-    private static final Logger log = LoggerFactory.getLogger(ReviewStatsService.class);
-
     public ReviewStatsService(ReviewRepo reviewRepo) {
         this.reviewRepo = reviewRepo;
     }
 
 
     public ReviewStatsResponse getReviewStatsForProduct(Long productId) {
-
-        log.info("Fetching review stats for productId={}", productId);
 
         long approvedReviews = reviewRepo.countByProductIdAndStatus(productId, ReviewStatus.APPROVED);
         long totalReviews = reviewRepo.countByProductIdAndStatus(productId, ReviewStatus.PENDING) +

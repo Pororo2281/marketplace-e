@@ -1,10 +1,12 @@
 package com.notification.notification.Enum;
 
-public enum UserEventType {
+public enum NotificationEventType {
     CREATED,
     UPDATED,
     DELETED,
     LOGIN,
     RESET_PASSWORD_REQUESTED,
-    PASSWORD_CHANGED
+    PASSWORD_CHANGED,
+    ORDER_CREATED,
+    ORDER_PAID
 }

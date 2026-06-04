@@ -6,6 +6,7 @@ import feign.FeignException;
 import order_service.order.Client.ProductClient;
 import order_service.order.Entity.OrderEntity;
 import order_service.order.Entity.OrderItemEntity;
+import order_service.order.Enum.OrderEventType;
 import order_service.order.Enum.OrderStatus;
 import order_service.order.Enum.PaymentStatus;
 import order_service.order.Exception.NotFoundById;
@@ -14,11 +15,10 @@ import order_service.order.Mapper.EntityToOrderItem;
 import order_service.order.Repository.MainOrderRepo;
 import order_service.order.Repository.OrderItemRepo;
 import order_service.order.Repository.OrderRepo;
-import order_service.order.Response.OrderMailResponse;
+import order_service.order.Response.OrderEvent;
 import order_service.order.Response.UpdatePaymentStatusResponse;
 import order_service.order.Service.LibraryService;
 import order_service.order.Service.OrderService;
-import org.slf4j.ILoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.resilience.annotation.Retryable;
@@ -98,13 +98,14 @@ public class RabbitReceiver {
                     orderRepo.save(order);
 
                 }
-                rabbitProducer.sendOrderPaid(new OrderMailResponse(mainOrder.getBuyerEmail(),
+                rabbitProducer.sendOrderPaid(new OrderEvent(mainOrder.getBuyerEmail(),
                         mainOrder.getOrderNumber(),
                         mainOrder.getTotalAmount(),
                         mainOrder.getCreatedAt(),
                         mainOrder.getPaidAt(),
                         mainOrder.getOrders().stream().flatMap(order->order.getItems().stream())
                                 .map(EntityToOrderItem::entityToOrderItem).toList()
+                        , OrderEventType.ORDER_PAID
                         ));
 
             } else if (response.getPaymentStatus().equalsIgnoreCase("CANCELED") || response.getPaymentStatus().equalsIgnoreCase("FAILED")) {

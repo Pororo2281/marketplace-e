@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-public class OrderMailResponse {
+public class OrderEvent {
 
     private String email;
     private String orderNumber;
@@ -17,10 +17,10 @@ public class OrderMailResponse {
     private OrderEventType orderEventType;
 
 
-    public OrderMailResponse() {
+    public OrderEvent() {
     }
 
-    public OrderMailResponse(String email, String orderNumber, BigDecimal totalPrice, Instant createdAt, Instant paidAt, List<OrderItemResponse> orderItems, OrderEventType orderEventType) {
+    public OrderEvent(String email, String orderNumber, BigDecimal totalPrice, Instant createdAt, Instant paidAt, List<OrderItemResponse> orderItems, OrderEventType orderEventType) {
         this.orderItems = orderItems;
         this.createdAt = createdAt;
         this.totalPrice = totalPrice;

@@ -24,7 +24,6 @@ public class DownloadService {
         this.minioClient = minioClient;
     }
 
-    // сделать проверку на accessCount
     public String getDownloadLink(Long orderItemId, Long userId) {
         var purchasedProduct = repo.findByOrderItemIdAndUserId(orderItemId,userId)
                 .orElseThrow(()-> new NotFoundById("purchasedProduct with id: " + orderItemId + " and userId: " + userId +  " not found"));

@@ -5,6 +5,7 @@ import order_service.order.Entity.CartItemEntity;
 import order_service.order.Entity.MainOrderEntity;
 import order_service.order.Entity.OrderEntity;
 import order_service.order.Entity.OrderItemEntity;
+import order_service.order.Enum.OrderEventType;
 import order_service.order.Enum.OrderStatus;
 import order_service.order.Enum.PaymentStatus;
 import order_service.order.Exception.*;
@@ -57,8 +58,6 @@ public class OrderService {
     @Transactional
     public List<OrderDetailResponse> createOrder(@Valid CreateOrderRequest request, Long userId) {
         List<CartItemEntity> cartItems = cartItemRepo.findAllById(request.getCartItemIds());
-
-
 
         if(cartItems.isEmpty()){
             throw new EmptyCartException("There are no products in the cart");
@@ -126,11 +125,13 @@ public class OrderService {
                             .map(EntityToOrderItem::entityToOrderItem)
                             .toList();
 
-            rabbitProducer.sendOrderCreated(new OrderMailResponse(orderItems
-                    ,mainOrder.getCreatedAt()
-                    ,mainOrder.getTotalAmount()
+            rabbitProducer.sendOrderCreated(new OrderEvent(mainOrder.getBuyerEmail()
                     ,mainOrder.getOrderNumber()
-                    ,mainOrder.getBuyerEmail()
+                    ,mainOrder.getTotalAmount()
+                    ,mainOrder.getCreatedAt(),
+                    mainOrder.getPaidAt()
+                    ,orderItems
+                    , OrderEventType.ORDER_CREATED
                     ));
 
             return orders.stream()
@@ -275,7 +276,7 @@ public class OrderService {
         var order = orderRepo.findById(id)
                 .filter(or -> or.getUserId().equals(userId))
                 .orElseThrow(() ->
-                        new RuntimeException("Order not found with id: " + id));
+                        new NotFoundById("Order not found with id: " + id));
 
         if (order.getPaymentStatus() != PaymentStatus.COMPLETED) {
             throw new RefundNotAllowedException("Refund not allowed. Payment not completed");
@@ -304,7 +305,7 @@ public class OrderService {
     public OrderDetailResponse approveRefund(Long orderId) {
 
         var order = orderRepo.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new NotFoundById("Order not found"));
 
         if (order.getStatus() != OrderStatus.REFUND_REQUESTED) {
             throw new RefundNotAllowedException("Refund not requested");

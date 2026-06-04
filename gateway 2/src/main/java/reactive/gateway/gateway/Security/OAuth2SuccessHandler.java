@@ -1,5 +1,6 @@
 package reactive.gateway.gateway.Security;
 
+import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -21,9 +22,10 @@ public class OAuth2SuccessHandler  implements ServerAuthenticationSuccessHandler
 
     private final WebClient webClient;
     private final JwtUtils jwtUtils;
+    private final Logger log = org.slf4j.LoggerFactory.getLogger(OAuth2SuccessHandler.class);
 
     public OAuth2SuccessHandler(WebClient.Builder webClientBuilder, JwtUtils jwtUtils) {
-        this.webClient = webClientBuilder.baseUrl("http://localhost:8081").build();
+        this.webClient = webClientBuilder.baseUrl("${services.user-service}").build();
         this.jwtUtils = jwtUtils;
     }
 
@@ -35,13 +37,16 @@ public class OAuth2SuccessHandler  implements ServerAuthenticationSuccessHandler
         String email = oAuth2User.getAttribute("email");
         String name  = oAuth2User.getAttribute("name");
 
+        log.info("OAuth2 success for email: {}, name: {}", email, name);
+
+
         return webClient.post()
                 .uri("/api/users/internal/oauth2")
                 .bodyValue(new OAuth2UserRequest(email, name))
                 .retrieve()
                 .bodyToMono(OAuth2UserResponse.class)
                 .flatMap(userResponse -> {
-                    String jwt = jwtUtils.generateTokenFromId(userResponse.getUserId(), userResponse.getRole());
+                    String jwt = jwtUtils.generateTokenFromId(userResponse.getUserId(), userResponse.getRole(),userResponse.getStatus());
 
                     ResponseCookie cookie = ResponseCookie.from("token", jwt)
                             .httpOnly(true)

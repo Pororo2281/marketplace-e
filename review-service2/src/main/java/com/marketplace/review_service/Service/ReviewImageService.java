@@ -2,6 +2,7 @@ package com.marketplace.review_service.Service;
 
 import com.marketplace.review_service.Entity.ReviewEntity;
 import com.marketplace.review_service.Entity.ReviewImageEntity;
+import com.marketplace.review_service.Exception.NotFoundById;
 import com.marketplace.review_service.Mapper.ReviewImageMapper;
 import com.marketplace.review_service.Repository.ReviewImageRepo;
 import com.marketplace.review_service.Repository.ReviewRepo;
@@ -20,7 +21,6 @@ public class ReviewImageService {
     private final ReviewImageRepo reviewImageRepo;
     private final ReviewRepo reviewRepo;
     private final MinIoService minIoService;
-    private static final Logger log = LoggerFactory.getLogger(ReviewImageService.class);
 
     @Value("${minio.bucket}")
     private String bucketName;
@@ -33,8 +33,6 @@ public class ReviewImageService {
 
     @Transactional
     public List<com.marketplace.review_service.dto.response.ReviewImageResponse> addImageToReview(Long id, List<MultipartFile> images) {
-
-        log.info("Adding {} images to reviewId={}", images.size(), id);
 
         var review = reviewRepo.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Review not found"));
@@ -85,10 +83,8 @@ public class ReviewImageService {
     @Transactional
     public void deleteReviewImage(Long imageId,Long id) {
 
-        log.info("Deleting imageId={} from reviewId={}", imageId, id);
-
         var image = reviewImageRepo.findById(imageId)
-                .orElseThrow(() -> new IllegalStateException("Review image not found"));
+                .orElseThrow(() -> new NotFoundById("Review image not found"));
         minIoService.deleteFile(image.getImageUrl(),bucketName);
         reviewImageRepo.delete(image);
         List<ReviewImageEntity> images = reviewImageRepo.findByReviewIdOrderByDisplayOrder(id);
@@ -101,7 +97,7 @@ public class ReviewImageService {
 
     public List<com.marketplace.review_service.dto.response.ReviewImageResponse> getImagesByReviewId(Long id) {
         var review = reviewRepo.findById(id)
-                .orElseThrow(() -> new IllegalStateException("Review not found"));
+                .orElseThrow(() -> new NotFoundById("Review not found by id: " + id));
         return review.getImages().stream()
                 .map(ReviewImageMapper::toResponse)
                 .toList();

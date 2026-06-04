@@ -7,7 +7,7 @@ import order_service.order.Response.ProductResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "product-service",url = "http://localhost:8082")
+@FeignClient(name = "product-service",url = "${services.product-service}")
 public interface ProductClient {
 
     @GetMapping("/api/products/{id}")

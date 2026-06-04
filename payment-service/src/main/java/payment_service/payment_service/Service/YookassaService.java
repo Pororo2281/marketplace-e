@@ -1,5 +1,6 @@
 package payment_service.payment_service.Service;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,8 @@ import payment_service.payment_service.Entity.PaymentEntity;
 import payment_service.payment_service.Entity.RefundEntity;
 import payment_service.payment_service.Enum.PaymentStatus;
 import payment_service.payment_service.Enum.RefundStatus;
+import payment_service.payment_service.Exception.NotFoundById;
+import payment_service.payment_service.Exception.PaymentAlreadyRefundedException;
 import payment_service.payment_service.Mapper.PaymentMapper;
 import payment_service.payment_service.RabbitMq.RabbitProducer;
 import payment_service.payment_service.Repository.PaymentRepo;
@@ -51,6 +54,7 @@ public class YookassaService {
         this.repo = repo;
     }
 
+    @Transactional
     public PaymentResponse createPayment(@Valid CreatePaymentRequest request, Long userId) {
         ApiClient client = ApiClientBuilder.newBuilder()
                 .configureBasicAuth(shopId, secretKey)
@@ -86,9 +90,10 @@ public class YookassaService {
         return repo.findById(paymentId)
                 .filter(payment -> payment.getUserId().equals(userId))
                 .map(PaymentMapper::paymentResponse)
-                .orElseThrow(()->new RuntimeException("not found by id: " + paymentId));
+                .orElseThrow(()->new NotFoundById("not found by id: " + paymentId));
     }
 
+    @Transactional
     public PaymentResponse refundPayment(Long paymentId, Long userId) {
         ApiClient client = ApiClientBuilder.newBuilder()
                 .configureBasicAuth(shopId, secretKey)
@@ -96,10 +101,10 @@ public class YookassaService {
 
         PaymentEntity paymentEntity = repo.findById(paymentId)
                 .filter(payment -> payment.getUserId().equals(userId))
-                .orElseThrow(()->new RuntimeException("not found by id: " + paymentId));
+                .orElseThrow(()->new NotFoundById("not found by id: " + paymentId));
 
         if (paymentEntity.getStatus() == PaymentStatus.REFUNDED){
-            throw new RuntimeException("payment already refunded");
+            throw new PaymentAlreadyRefundedException("payment already refunded");
         }
 
         RefundProcessor refundProcessor = new RefundProcessor(client);

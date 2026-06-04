@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import payment_service.payment_service.Request.PaymentStatusRequest;
 
-@FeignClient(name = "order-service",url = "http://localhost:8083")
+@FeignClient(name = "order-service",url = "${services.order-service}")
 public interface OrderClient {
 
     @PostMapping("/api/internal/orders/{orderId}/payment-status")

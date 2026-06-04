@@ -12,7 +12,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 @Component
-public class LoginHtmlSender implements HtmlSender{
+public class LoginHtmlSender implements HtmlSender<UserEvent>{
 
     private final JavaMailSender mailSender;
     private final EmailLoader emailLoader;

@@ -5,9 +5,12 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,13 +20,22 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.ObjectMapper;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class JwtGlobalFilter implements WebFilter{
     @Value("${jwt.secret}")
     private String jwtSecret;
+
+    private CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    public JwtGlobalFilter(CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
@@ -46,8 +58,10 @@ public class JwtGlobalFilter implements WebFilter{
         String token = extractToken(exchange);
 
         if (token == null) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+            return customAuthenticationEntryPoint.commence(
+                    exchange,
+                    new InsufficientAuthenticationException("No JWT token provided")
+            );
         }
 
         try {
@@ -63,6 +77,15 @@ public class JwtGlobalFilter implements WebFilter{
 
             String userId = claims.getSubject();
             String role = claims.get("role", String.class);
+            String status = claims.get("status", String.class);
+
+            if (!"ACTIVE".equals(status)) {
+                return writeError(
+                        exchange,
+                        HttpStatus.FORBIDDEN,
+                        "User is blocked"
+                );
+            }
 
             var authorities = List.of(
                     new SimpleGrantedAuthority("ROLE_" + role)
@@ -115,5 +138,37 @@ public class JwtGlobalFilter implements WebFilter{
         }
 
         return null;
+    }
+
+    private Mono<Void> writeError(
+            ServerWebExchange exchange,
+            HttpStatus status,
+            String message) {
+
+        exchange.getResponse().setStatusCode(status);
+        exchange.getResponse().getHeaders()
+                .setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> body = Map.of(
+                "message", message,
+                "status", status.value(),
+                "timestamp", Instant.now(),
+                "path", exchange.getRequest().getPath().value()
+        );
+
+        try {
+            byte[] bytes = new ObjectMapper()
+                    .writeValueAsBytes(body);
+
+            DataBuffer buffer = exchange.getResponse()
+                    .bufferFactory()
+                    .wrap(bytes);
+
+            return exchange.getResponse()
+                    .writeWith(Mono.just(buffer));
+
+        } catch (Exception e) {
+            return Mono.error(e);
+        }
     }
 }

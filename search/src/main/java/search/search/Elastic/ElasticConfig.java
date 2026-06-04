@@ -16,8 +16,12 @@ public class ElasticConfig {
     @Bean
     public ElasticsearchClient elasticsearchClient() {
 
+
+        String host = System.getenv().getOrDefault("ELASTICSEARCH_HOST", "localhost");
+        int port = Integer.parseInt(System.getenv().getOrDefault("ELASTICSEARCH_PORT", "9200"));
+
         RestClient restClient = RestClient.builder(
-                new HttpHost("localhost", 9200)
+                new HttpHost(host, port, "http")
         ).build();
 
         ElasticsearchTransport transport = new RestClientTransport(

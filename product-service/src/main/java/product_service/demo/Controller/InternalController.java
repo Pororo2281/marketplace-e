@@ -68,4 +68,16 @@ public class InternalController {
     public ResponseEntity<ProductResponse> getProduct(@RequestParam Long productId){
         return ResponseEntity.ok(service.getSellerIdByProductId(productId));
     }
+
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<Void> approveProduct(@PathVariable Long id){
+        service.approveProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<Void> rejectProduct(@PathVariable Long id){
+        service.rejectProduct(id);
+        return ResponseEntity.noContent().build();
+    }
 }

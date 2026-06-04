@@ -65,4 +65,8 @@ public interface ReviewRepo extends JpaRepository<ReviewEntity, Long>, JpaSpecif
 
 
     List<ReviewEntity> findByProductIdAndStatus(Long productId, ReviewStatus status);
+
+
+    @Query("SELECT r FROM ReviewEntity r WHERE r.status = 'PENDING'")
+    Page<ReviewEntity> findPendingReview(Pageable pageable);
 }

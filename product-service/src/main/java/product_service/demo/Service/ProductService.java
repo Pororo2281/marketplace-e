@@ -16,6 +16,9 @@ import product_service.demo.Enum.ProductStatus;
 import product_service.demo.Event.ProductBatchEvent;
 import product_service.demo.Event.ProductEvent;
 import product_service.demo.Exception.NotFoundById;
+import product_service.demo.Exception.ProductArchivedException;
+import product_service.demo.Exception.ProductImagesRequiredException;
+import product_service.demo.Exception.ProductModificationNotAllowedException;
 import product_service.demo.Mapper.ProductEventMapper;
 import product_service.demo.Mapper.ProductMapper;
 import product_service.demo.MapperToEntity.AttributeEntityMapper;
@@ -91,7 +94,7 @@ public class ProductService {
         var productEntity = repository.findById(id)
                 .orElseThrow(() -> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus()!= ProductStatus.ACTIVE) {
-            throw new RuntimeException("Product with id: " + id + " not found");
+            throw new NotFoundById("Product with id: " + id + " not found");
         }
         return productMapper.entityToProduct(productEntity);
     }
@@ -223,7 +226,7 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(() -> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus()== ProductStatus.ARCHIVED){
-            throw new RuntimeException("Product with id: " + id + " not found");
+            throw new NotFoundById("Product with id: " + id + " not found");
         }
         return productMapper.entityToProduct(productEntity);
     }
@@ -281,10 +284,10 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus()==ProductStatus.ACTIVE){
-            throw new RuntimeException("Product with id: " + id + " is already published");
+            throw new ProductModificationNotAllowedException("Product with id: " + id + " is already published");
         }
         if (productEntity.getStatus() == ProductStatus.ARCHIVED) {
-            throw new RuntimeException("Archived product cannot be published");
+            throw new ProductModificationNotAllowedException("Archived product cannot be published");
         }
         if (productEntity.getStatus()==ProductStatus.DRAFT){
             productEntity.setStatus(ProductStatus.ACTIVE);
@@ -299,7 +302,7 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus()==ProductStatus.ARCHIVED){
-            throw new RuntimeException("Product with id: " + id + " is already archived");
+            throw new ProductModificationNotAllowedException("Product with id: " + id + " is already archived");
         }
         productEntity.setStatus(ProductStatus.ARCHIVED);
 
@@ -316,7 +319,7 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus() == ProductStatus.ARCHIVED) {
-            throw new RuntimeException("Cannot update stock of archived product");
+            throw new ProductModificationNotAllowedException("Cannot update stock of archived product");
         }
         productEntity.setStockQuantity(request.getStockQuantity());
         repository.save(productEntity);
@@ -329,7 +332,7 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus() == ProductStatus.ARCHIVED) {
-            throw new RuntimeException("Cannot update price of archived product");
+            throw new ProductModificationNotAllowedException("Cannot update price of archived product");
         }
         if (request.getPrice()!= null){
             productEntity.setPrice(request.getPrice());
@@ -350,11 +353,11 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus() == ProductStatus.ARCHIVED) {
-            throw new RuntimeException("Cannot add images to archived product");
+            throw new ProductArchivedException("Cannot add images to archived product");
         }
         List<ProductImageEntity> productImages = saveProductImages(images, productEntity);
         if (productImages==null || productImages.isEmpty()){
-            throw new RuntimeException("No images to add");
+            throw new ProductImagesRequiredException("No images to add");
         }
         if (productEntity.getImages() == null) {
             productEntity.setImages(new ArrayList<>());
@@ -370,7 +373,7 @@ public class ProductService {
                 .filter(product->product.getSellerId().equals(sellerId))
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
         if (productEntity.getStatus() == ProductStatus.ARCHIVED) {
-            throw new RuntimeException("Cannot delete images of archived product");
+            throw new ProductModificationNotAllowedException("Cannot delete images of archived product");
         }
         ProductImageEntity image = productEntity.getImages().stream().filter(x->x.getId().equals(imageId)).findFirst()
                 .orElseThrow(()-> new NotFoundById("Image with id: " + imageId + " not found"));
@@ -385,7 +388,7 @@ public class ProductService {
                 .orElseThrow(()-> new NotFoundById("Product with id: " + id + " not found"));
 
         if (productEntity.getStatus() == ProductStatus.ARCHIVED) {
-            throw new RuntimeException("Cannot delete images of archived product");
+            throw new ProductModificationNotAllowedException("Cannot delete images of archived product");
         }
 
         ProductImageEntity imageEntity = productEntity.getImages().stream()

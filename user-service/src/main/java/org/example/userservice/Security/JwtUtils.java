@@ -2,6 +2,7 @@ package org.example.userservice.Security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.example.userservice.Enums.UserStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -37,11 +38,12 @@ public class JwtUtils {
                .compact();
     }
 
-    public String generateTokenFromId(Long id,String role) {
+    public String generateTokenFromId(Long id, String role, UserStatus status) {
         return Jwts.builder()
                 .setSubject(id.toString())
                 .claim("type","ACCESS")
                 .claim("role",role)
+                .claim("status",status.name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(key(jwtSecret),SignatureAlgorithm.HS256)

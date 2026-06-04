@@ -1,10 +1,11 @@
 package com.notification.notification.Event;
 
+import com.notification.notification.Enum.NotificationEventType;
 import com.notification.notification.Enum.UserEventType;
 
 import java.time.Instant;
 
-public class UserEvent {
+public class UserEvent implements NotificationEvent {
 
     private Long userId;
     private UserEventType eventType;
@@ -61,4 +62,8 @@ public class UserEvent {
         this.actionTime = actionTime;
     }
 
+    @Override
+    public NotificationEventType getType() {
+        return NotificationEventType.valueOf(eventType.name());
+    }
 }
