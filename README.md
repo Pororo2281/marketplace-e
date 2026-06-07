@@ -1,44 +1,44 @@
-# Marketplace — E-commerce платформа
+# Marketplace — E-commerce Platform
 
-Многосервисный маркетплейс на Java/Spring Boot. Покупатели могут искать товары и оформлять заказы, продавцы — управлять каталогом и отслеживать продажи.
+Multi-service marketplace built with Java/Spring Boot. Buyers can search for products and place orders, sellers can manage their catalog and track sales.
 
-## Технологии
+## Tech Stack
 
-- **Java 17, Spring Boot** — основной стек
-- **Spring Security + JWT** — авторизация и роли
-- **PostgreSQL** — основная база данных
-- **Redis** — кэширование
-- **RabbitMQ** — асинхронные события между сервисами
-- **Elasticsearch** — полнотекстовый поиск товаров
-- **MinIO** — хранение изображений
-- **Docker / Docker Compose** — запуск инфраструктуры
-- **Liquibase** — миграции базы данных
-- **Stripe** — обработка платежей
+- **Java 17, Spring Boot** — core framework
+- **Spring Security + JWT** — authentication and role-based access
+- **PostgreSQL** — primary database
+- **Redis** — caching
+- **RabbitMQ** — async messaging between services
+- **Elasticsearch** — full-text product search
+- **MinIO** — image storage
+- **Docker / Docker Compose** — infrastructure
+- **Liquibase** — database migrations
+- **YooKassa** — payment processing
 
-## Сервисы
+## Services
 
-| Сервис | Описание |
+| Service | Description |
 |---|---|
-| user-service | Регистрация, авторизация, профили продавцов |
-| product-service | Каталог товаров, категории, поиск |
-| order-service | Корзина, заказы |
-| notification-service | Email-уведомления |
+| user-service | Registration, authentication, seller profiles |
+| product-service | Product catalog, categories, search |
+| order-service | Cart, orders |
+| notification-service | Email notifications |
 
-## Запуск
+## Getting Started
 
-\```bash
-git clone https://github.com/ваш-username/marketplace.git
+```bash
+git clone https://github.com/your-username/marketplace.git
 cd marketplace
 docker-compose up -d
-\```
+```
 
-## Функционал
+## Features
 
-- Регистрация и вход (JWT + Refresh token)
-- Каталог товаров с фильтрацией и поиском
-- Загрузка изображений товаров
-- Корзина и оформление заказов
-- Оплата через Stripe
-- Email-уведомления о статусе заказа
-- Панель продавца со статистикой
-- Панель администратора
+- Registration and login (JWT + Refresh token)
+- Product catalog with filters and search
+- Product image uploads
+- Cart and order management
+- Payment processing via YooKassa
+- Email notifications on order status updates
+- Seller dashboard with sales analytics
+- Admin panel
