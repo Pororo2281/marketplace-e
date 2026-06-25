@@ -22,6 +22,11 @@ public class SellerProfileController {
         return ResponseEntity.ok(service.getSellerProfile(id));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<SellerResponse> getSellerProfileByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok(service.getSellerProfileByUserId(userId));
+    }
+
     @GetMapping("/{id}/stats")
     public ResponseEntity<SellerResponse> getSellerStats(@PathVariable Long id){
         return ResponseEntity.ok(service.getSellerStats(id));

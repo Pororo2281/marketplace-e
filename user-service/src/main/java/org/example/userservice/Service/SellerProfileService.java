@@ -37,6 +37,12 @@ public class SellerProfileService {
         return SellerMapper.entityToSeller(profile);
     }
 
+    public SellerResponse getSellerProfileByUserId(Long userId) {
+        var profile = repo.findByUserId(userId)
+                .orElseThrow(()-> new NotFoundById("sellerProfile for user with id: " + userId + " not found"));
+        return SellerMapper.entityToSeller(profile);
+    }
+
     public SellerResponse getSellerStats(Long id) {
         var sellerProfile = repo.findById(id)
                 .orElseThrow(()-> new NotFoundById("sellerProfile with id: " + id + " not found"));

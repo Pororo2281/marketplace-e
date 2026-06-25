@@ -9,6 +9,7 @@ public class EntityToOrderDetail {
         orderDetailResponse.setOrderNumber(entity.getOrderNumber());
         orderDetailResponse.setBuyerEmail(entity.getBuyerEmail());
         orderDetailResponse.setId(entity.getId());
+        orderDetailResponse.setMainOrderId(entity.getMainOrder().getId());
         orderDetailResponse.setCancelledAt(entity.getCancelledAt());
         orderDetailResponse.setItems(entity.getItems().stream().map(EntityToOrderItem::entityToOrderItem)
                 .toList());

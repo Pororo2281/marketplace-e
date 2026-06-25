@@ -8,6 +8,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.server.WebFilterExchange;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactive.gateway.gateway.Jwt.JwtUtils;
 import reactive.gateway.gateway.Request.OAuth2UserRequest;
@@ -22,11 +24,20 @@ public class OAuth2SuccessHandler  implements ServerAuthenticationSuccessHandler
 
     private final WebClient webClient;
     private final JwtUtils jwtUtils;
+    private final String frontendUrl;
+    private final boolean secureCookie;
     private final Logger log = org.slf4j.LoggerFactory.getLogger(OAuth2SuccessHandler.class);
 
-    public OAuth2SuccessHandler(WebClient.Builder webClientBuilder, JwtUtils jwtUtils) {
-        this.webClient = webClientBuilder.baseUrl("${services.user-service}").build();
+    public OAuth2SuccessHandler(
+            WebClient.Builder webClientBuilder,
+            JwtUtils jwtUtils,
+            @Value("${services.user-service}") String userServiceUrl,
+            @Value("${app.frontend-url:http://localhost:3001}") String frontendUrl,
+            @Value("${app.oauth-cookie-secure:false}") boolean secureCookie) {
+        this.webClient = webClientBuilder.baseUrl(userServiceUrl).build();
         this.jwtUtils = jwtUtils;
+        this.frontendUrl = frontendUrl;
+        this.secureCookie = secureCookie;
     }
 
     @Override
@@ -52,13 +63,22 @@ public class OAuth2SuccessHandler  implements ServerAuthenticationSuccessHandler
                             .httpOnly(true)
                             .path("/")
                             .maxAge(Duration.ofHours(1))
-                            .secure(true)
+                            .secure(secureCookie)
                             .build();
 
                     var response = webFilterExchange.getExchange().getResponse();
                     response.addCookie(cookie);
                     response.setStatusCode(HttpStatus.FOUND);
-                    response.getHeaders().setLocation(URI.create("http://localhost:3000"));
+                    String callbackUrl = UriComponentsBuilder
+                            .fromUriString(frontendUrl)
+                            .path("/auth/callback")
+                            .queryParam("email", email)
+                            .queryParam("name", name)
+                            .queryParam("role", userResponse.getRole())
+                            .build()
+                            .encode()
+                            .toUriString();
+                    response.getHeaders().setLocation(URI.create(callbackUrl));
                     return response.setComplete();
                 });
     }

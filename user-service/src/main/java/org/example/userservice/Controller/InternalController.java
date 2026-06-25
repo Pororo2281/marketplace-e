@@ -21,8 +21,6 @@ public class InternalController {
     }
 
 
-
-
     @PostMapping("/oauth2")
     public ResponseEntity<OAuth2UserResponse> findOrCreate(@Valid @RequestBody OAuth2UserRequest request) {
         return ResponseEntity.ok(service.findOrCreate(request));

@@ -112,6 +112,10 @@ services:
       - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
       - user-postgres
       - rabbitmq
@@ -260,6 +264,10 @@ services:
       ORDER_SERVICE_URL: http://order-service:8083
       REVIEW_SERVICE_URL: http://review-service:8088
       SEARCH_SERVICE_URL: http://search-service:8086
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
       - payment-postgres
       - rabbitmq
@@ -291,7 +299,15 @@ services:
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki          
-        
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
 volumes:
   minio_data:
   grafana_data:

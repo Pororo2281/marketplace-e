@@ -69,11 +69,12 @@ public class UserService {
         userEntity.setFirstName(createUserRequest.getFirstName());
         userEntity.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
         userEntity.setRole(Role.BUYER);
+        userEntity.setUserStatus(UserStatus.ACTIVE);
         userEntity.setCreatedAt(Instant.now());
         userEntity.setUpdatedAt(Instant.now());
         userRepo.save(userEntity);
 
-        String token = jwtUtils.generateTokenFromId(userEntity.getId(),Role.BUYER.name(),userEntity.getUserStatus());
+        String token = jwtUtils.generateTokenFromId(userEntity.getId(),Role.BUYER.name(), UserStatus.ACTIVE);
         String refreshToken = jwtUtils.generateRefreshTokenFromId(userEntity.getId());
 
         RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
@@ -104,6 +105,13 @@ public class UserService {
     public AuthResponse login(UserRequest request){
         var user = userRepo.findByEmail(request.getEmail())
                 .orElseThrow(()->new UserNotFoundByEmail("user not found by email: " + request.getEmail()));
+
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword())) {
+
+            throw new InvalidPasswordResetTokenException("Invalid email or password");
+        }
 
         if (user.getUserStatus() == UserStatus.BLOCKED){
             throw new UserBlocked("user with email: " + request.getEmail() + " is blocked");

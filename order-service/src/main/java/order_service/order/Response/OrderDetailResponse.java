@@ -10,6 +10,7 @@ import java.util.List;
 public class OrderDetailResponse {
 
     private Long id;
+    private Long mainOrderId;
     private String orderNumber;
     private OrderStatus status;
     private PaymentStatus paymentStatus;
@@ -42,6 +43,9 @@ public class OrderDetailResponse {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getMainOrderId() { return mainOrderId; }
+    public void setMainOrderId(Long mainOrderId) { this.mainOrderId = mainOrderId; }
 
     public String getOrderNumber() { return orderNumber; }
     public void setOrderNumber(String orderNumber) { this.orderNumber = orderNumber; }
