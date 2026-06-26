@@ -28,6 +28,7 @@ import java.util.Map;
 
 @Component
 public class JwtGlobalFilter implements WebFilter{
+
     @Value("${jwt.secret}")
     private String jwtSecret;
 
