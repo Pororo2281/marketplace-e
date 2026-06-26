@@ -1,0 +1,39 @@
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+spring:
+  application:
+    name: user-service
+  cache:
+    type: redis
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 2592000000
+  refresh:
+    secret: ${JWT_REFRESH_SECRET}
+    expiration: 604800000
+
+rabbitmq:
+  queue:
+    user-activity: user-activity.notification.queue
