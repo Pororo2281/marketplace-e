@@ -12,9 +12,23 @@ public class MyKeyResolver {
     @Primary
     @Bean("ipKeyResolver")
     public KeyResolver ipKeyResolver() {
-        return exchange -> Mono.just(
-                exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
-        );
+        return exchange -> {
+            String ip = exchange.getRequest()
+                    .getHeaders()
+                    .getFirst("X-Forwarded-For");
+
+            if (ip != null && !ip.isBlank()) {
+                return Mono.just(ip.split(",")[0].trim());
+            }
+
+            var remote = exchange.getRequest().getRemoteAddress();
+
+            if (remote != null) {
+                return Mono.just(remote.getHostString());
+            }
+
+            return Mono.just("unknown");
+        };
     }
 
     @Bean("userKeyResolver")
