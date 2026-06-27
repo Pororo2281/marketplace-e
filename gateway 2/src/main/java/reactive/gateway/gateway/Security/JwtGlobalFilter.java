@@ -124,7 +124,7 @@ public class JwtGlobalFilter implements WebFilter{
 
         HttpCookie cookie = exchange.getRequest()
                 .getCookies()
-                .getFirst("token");
+                .getFirst("nexa_access_token");
 
         if (cookie != null) {
             return cookie.getValue();
