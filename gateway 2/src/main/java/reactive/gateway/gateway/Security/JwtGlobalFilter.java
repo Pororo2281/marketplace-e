@@ -51,7 +51,18 @@ public class JwtGlobalFilter implements WebFilter{
                         path.startsWith("/login/oauth2/") ||
                         path.startsWith("/api/products/") ||
                         path.startsWith("/api/categories/") ||
-                        path.startsWith("/api/search/")
+                        path.startsWith("/api/search/") ||
+
+                        path.startsWith("/swagger-ui") ||
+                        path.startsWith("/v3/api-docs") ||
+                        path.startsWith("/user-service/v3/api-docs") ||
+                        path.startsWith("/product-service/v3/api-docs") ||
+                        path.startsWith("/order-service/v3/api-docs") ||
+                        path.startsWith("/payment-service/v3/api-docs") ||
+                        path.startsWith("/admin-service/v3/api-docs") ||
+                        path.startsWith("/review-service/v3/api-docs") ||
+                        path.startsWith("/search-service/v3/api-docs") ||
+                        path.startsWith("/notification-service/v3/api-docs")
         ) {
             return chain.filter(exchange);
         }

@@ -32,12 +32,16 @@ public class Router {
     @Value("${services.search-service}")
     private String searchServiceUrl;
 
+    @Value("${services.notification-service}")
+    private String notificationServiceUrl;
+
     @Bean
     public RouteLocator routeLocator(RouteLocatorBuilder builder,
                                      RedisRateLimiter redisRateLimiter,
                                      KeyResolver ipKeyResolver,
                                      KeyResolver userKeyResolver) {
         return builder.routes()
+
                 .route("oauth-start", r -> r.path("/oauth2/authorization/**")
                         .uri(userServiceUrl))
 
@@ -176,6 +180,38 @@ public class Router {
                             c.setKeyResolver(ipKeyResolver);
                         }))
                         .uri(reviewServiceUrl))
+
+                .route("user-service-docs", r -> r.path("/user-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/user-service/(?<segment>.*)", "/${segment}"))
+                        .uri(userServiceUrl))
+
+                .route("admin-service-docs", r -> r.path("/admin-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/admin-service/(?<segment>.*)", "/${segment}"))
+                        .uri(adminServiceUrl))
+
+                .route("payment-service-docs", r -> r.path("/payment-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/payment-service/(?<segment>.*)", "/${segment}"))
+                        .uri(paymentServiceUrl))
+
+                .route("review-service-docs", r -> r.path("/review-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/review-service/(?<segment>.*)", "/${segment}"))
+                        .uri(reviewServiceUrl))
+
+                .route("search-service-docs", r -> r.path("/search-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/search-service/(?<segment>.*)", "/${segment}"))
+                        .uri(searchServiceUrl))
+
+                .route("notification-service-docs", r -> r.path("/notification-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/notification-service/(?<segment>.*)", "/${segment}"))
+                        .uri(notificationServiceUrl))
+
+                .route("product-service-docs", r -> r.path("/product-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/product-service/(?<segment>.*)", "/${segment}"))
+                        .uri(productServiceUrl))
+
+                .route("order-service-docs", r -> r.path("/order-service/v3/api-docs")
+                        .filters(f -> f.rewritePath("/order-service/(?<segment>.*)", "/${segment}"))
+                        .uri(orderServiceUrl))
 
                 .build();
     }

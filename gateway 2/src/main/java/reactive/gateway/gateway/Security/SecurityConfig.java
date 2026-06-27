@@ -47,6 +47,11 @@ public class SecurityConfig {
                         .pathMatchers("/api/sellers/*/products").permitAll()
                         .pathMatchers("/api/sellers/**").hasRole("SELLER")
                         .pathMatchers("/api/orders/sellers/**").hasRole("SELLER")
+                        .pathMatchers("/swagger-ui.html").permitAll()
+                        .pathMatchers("/swagger-ui/**").permitAll()
+                        .pathMatchers("/webjars/**").permitAll()
+                        .pathMatchers("/v3/api-docs/**").permitAll()
+                        .pathMatchers("/*-service/v3/api-docs/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(exceptionHandlingSpec ->

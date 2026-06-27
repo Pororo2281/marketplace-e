@@ -63,6 +63,8 @@ public class UserService {
             throw new EmailAlreadyExistsException("User with email " + createUserRequest.getEmail() + " already exists");
         });
 
+        System.out.println("createUserRequest = " + createUserRequest);
+
         UserEntity userEntity = new UserEntity();
         userEntity.setEmail(createUserRequest.getEmail());
         userEntity.setLastName(createUserRequest.getLastName());

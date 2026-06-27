@@ -23,6 +23,7 @@ services:
   admin-service: ${ADMIN_SERVICE_URL:http://localhost:8089}
   review-service: ${REVIEW_SERVICE_URL:http://localhost:8088}
   search-service: ${SEARCH_SERVICE_URL:http://localhost:8086}
+  notification-service: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
 
 app:
   frontend-url: ${FRONTEND_URL:https://digitshop.shop}
@@ -46,3 +47,24 @@ spring:
               - email
               - profile
               - openid
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: user-service
+        url: /user-service/v3/api-docs
+      - name: product-service
+        url: /product-service/v3/api-docs
+      - name: order-service
+        url: /order-service/v3/api-docs
+      - name: admin-service
+        url: /admin-service/v3/api-docs
+      - name: payment-service
+        url: /payment-service/v3/api-docs
+      - name: review-service
+        url: /review-service/v3/api-docs
+      - name: search-service
+        url: /search-service/v3/api-docs
+      - name: notification-service
+        url: /notification-service/v3/api-docs
