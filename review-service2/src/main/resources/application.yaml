@@ -1,0 +1,37 @@
+server:
+    port: 8088
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info,metrics,prometheus
+
+    endpoint:
+        health:
+            show-details: always
+
+    prometheus:
+        metrics:
+            export:
+                enabled: true
+
+services:
+    user-service: ${USER_SERVICE_URL:http://localhost:8081}
+    product-service: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+    order-service: ${ORDER_SERVICE_URL:http://localhost:8083}
+    payment-service: ${PAYMENT_SERVICE_URL:http://localhost:8084}
+    admin-service: ${ADMIN_SERVICE_URL:http://localhost:8089}
+    review-service: ${REVIEW_SERVICE_URL:http://localhost:8088}
+    search-service: ${SEARCH_SERVICE_URL:http://localhost:8086}
+
+spring:
+    application:
+        name: review-service
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+
+minio:
+    bucket: products
