@@ -45,5 +45,8 @@ rabbitmq:
     order: order-service.payment.queue
     dead: dead.letter.queue
 
+minio:
+  bucket: products
+
 internal:
   secret-token: ${INTERNAL_SECRET_TOKEN}
