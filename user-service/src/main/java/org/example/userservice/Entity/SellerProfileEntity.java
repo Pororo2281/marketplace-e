@@ -31,12 +31,6 @@ public class SellerProfileEntity {
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @OneToMany(
-            mappedBy = "sellerProfile",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<ProductEntity> products = new ArrayList<>();
 
     public SellerProfileEntity(UserEntity user, Instant createdAt, Integer totalSales) {
         this.user = user;
@@ -103,11 +97,4 @@ public class SellerProfileEntity {
         this.createdAt = createdAt;
     }
 
-    public List<ProductEntity> getProducts() {
-        return products;
-    }
-
-    public void setProducts(List<ProductEntity> products) {
-        this.products = products;
-    }
 }
