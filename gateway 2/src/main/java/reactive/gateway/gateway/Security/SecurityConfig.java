@@ -1,17 +1,14 @@
 package reactive.gateway.gateway.Security;
 
-import com.nimbusds.jose.crypto.impl.PRFParams;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-import org.springframework.web.server.WebFilter;
+
 
 import java.util.List;
 
@@ -39,19 +36,29 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/oauth2/authorization/**").permitAll()
                         .pathMatchers("/login/oauth2/**").permitAll()
-                        .pathMatchers("api/users/internal/**").denyAll()
+
+
+                        .pathMatchers("/api/users/internal/**").denyAll()
+
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/api/categories/**").permitAll()
                         .pathMatchers("/api/products/**").permitAll()
                         .pathMatchers("/api/search/**").permitAll()
                         .pathMatchers("/api/sellers/*/products").permitAll()
+
+
+                        .pathMatchers("/api/admins/**").hasRole("ADMIN")
+                        .pathMatchers("/api/admin/**").hasRole("ADMIN")
+
                         .pathMatchers("/api/sellers/**").hasRole("SELLER")
                         .pathMatchers("/api/orders/sellers/**").hasRole("SELLER")
+
                         .pathMatchers("/swagger-ui.html").permitAll()
                         .pathMatchers("/swagger-ui/**").permitAll()
                         .pathMatchers("/webjars/**").permitAll()
                         .pathMatchers("/v3/api-docs/**").permitAll()
                         .pathMatchers("/*-service/v3/api-docs/**").permitAll()
+
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(exceptionHandlingSpec ->
