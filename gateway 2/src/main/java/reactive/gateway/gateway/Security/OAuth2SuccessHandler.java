@@ -59,7 +59,7 @@ public class OAuth2SuccessHandler  implements ServerAuthenticationSuccessHandler
                 .flatMap(userResponse -> {
                     String jwt = jwtUtils.generateTokenFromId(userResponse.getUserId(), userResponse.getRole(),userResponse.getStatus());
 
-                    ResponseCookie cookie = ResponseCookie.from("token", jwt)
+                    ResponseCookie cookie = ResponseCookie.from("nexa_access_token", jwt)
                             .httpOnly(true)
                             .path("/")
                             .maxAge(Duration.ofHours(1))
