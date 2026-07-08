@@ -63,7 +63,7 @@ public class OAuth2SuccessHandler  implements ServerAuthenticationSuccessHandler
                             .httpOnly(true)
                             .path("/")
                             .maxAge(Duration.ofHours(1))
-                            .secure(secureCookie)
+                            .domain(".digitshop.shop")                            .secure(secureCookie)
                             .build();
 
                     var response = webFilterExchange.getExchange().getResponse();
