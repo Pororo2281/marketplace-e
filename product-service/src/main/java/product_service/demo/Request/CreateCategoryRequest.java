@@ -27,7 +27,7 @@ public class CreateCategoryRequest {
     @NotNull(message = "isActive flag cannot be null")
     private Boolean isActive;
 
-    // Конструкторы
+
     public CreateCategoryRequest() {}
 
     public CreateCategoryRequest(String name, String slug, String description,
@@ -40,7 +40,6 @@ public class CreateCategoryRequest {
         this.isActive = isActive;
     }
 
-    // Геттеры и сеттеры
     public String getName() {
         return name;
     }
