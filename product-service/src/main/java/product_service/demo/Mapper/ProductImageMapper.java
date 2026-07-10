@@ -72,6 +72,6 @@ public class ProductImageMapper {
 
 
     private String getImageUrl(String objectKey) {
-        return "http://localhost:9000/products/" + objectKey;
+        return "https://digitshop.shop/storage/products/" + objectKey;
     }
 }

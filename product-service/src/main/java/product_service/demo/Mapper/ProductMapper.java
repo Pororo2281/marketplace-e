@@ -55,10 +55,11 @@ public class ProductMapper {
             productResponse.setImages(imageResponses);
 
             productResponse.setMainImageUrl(entity.getImages().stream()
-                    .filter(image -> image.getIsMain())
+                    .filter(image -> Boolean.TRUE.equals(image.getIsMain()))
                     .findFirst()
-                    .map(image -> image.getUrl())
+                    .map(image -> imageMapper.entityToImage(image).getImageUrl())
                     .orElse(null));
+
         }
         return productResponse;
 
