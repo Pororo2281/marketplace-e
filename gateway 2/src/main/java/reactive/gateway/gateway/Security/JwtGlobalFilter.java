@@ -50,6 +50,7 @@ public class JwtGlobalFilter implements WebFilter{
                         path.startsWith("/oauth2/") ||
                         path.startsWith("/login/oauth2/") ||
                         path.startsWith("/api/products/") ||
+                        path.equals("/api/products") ||
                         path.equals("/api/categories") ||
                         path.startsWith("/api/categories/") ||
                         path.startsWith("/api/search/") ||
